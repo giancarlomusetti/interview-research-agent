@@ -2,6 +2,8 @@
 
 AI-powered interview preparation tool. Paste a job description and get a comprehensive, role-aware research briefing with tailored interview prep in ~20 seconds.
 
+**[Try it live](https://interview-research-agent.vercel.app)** — no sign-up, no API keys needed. 10 free researches per day.
+
 ## What It Does
 
 1. **Parses the job description** — extracts company, role, skills, responsibilities, seniority
@@ -50,7 +52,7 @@ Client (React)  ─── SSE ───>  /api/research (Next.js Route Handler)
 ### Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/giancarlomusetti/interview-research-agent.git
 cd interview-research-agent
 npm install
 
