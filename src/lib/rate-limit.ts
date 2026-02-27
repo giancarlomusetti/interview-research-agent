@@ -21,6 +21,11 @@ export function checkRateLimit(ip: string): {
   remaining: number;
   resetAt: number;
 } {
+  // Skip rate limiting in development
+  if (process.env.NODE_ENV === "development") {
+    return { allowed: true, remaining: MAX_REQUESTS, resetAt: Date.now() + WINDOW_MS };
+  }
+
   const now = Date.now();
   const entry = store.get(ip);
 

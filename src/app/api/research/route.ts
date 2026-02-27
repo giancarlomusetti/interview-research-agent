@@ -60,21 +60,31 @@ export async function POST(request: NextRequest) {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
 
+  let closed = false;
+
   function emit(event: PipelineEvent) {
+    if (closed) return;
     const data = `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;
     writer.write(encoder.encode(data));
+  }
+
+  function closeWriter() {
+    if (!closed) {
+      closed = true;
+      writer.close();
+    }
   }
 
   // Run pipeline in background — don't await, let the stream flow
   runResearchPipeline(jobDescription, emit)
     .then(() => {
-      writer.close();
+      closeWriter();
     })
     .catch((error) => {
       console.error("[research] Pipeline error:", error);
       const message = error instanceof Error ? error.message : "Pipeline failed";
       emit({ type: "error", message });
-      writer.close();
+      closeWriter();
     });
 
   return new Response(readable, {

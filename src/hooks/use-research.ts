@@ -65,6 +65,35 @@ export function useResearch(): UseResearchReturn {
         const decoder = new TextDecoder();
         let buffer = "";
 
+        function processLine(line: string) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            try {
+              const event: PipelineEvent = JSON.parse(data);
+              switch (event.type) {
+                case "progress":
+                  setSteps(event.steps);
+                  break;
+                case "section":
+                  setReport((prev) => ({
+                    ...prev,
+                    [event.sectionId]: event.data,
+                  }));
+                  break;
+                case "complete":
+                  setState("complete");
+                  break;
+                case "error":
+                  setError(event.message);
+                  setState("error");
+                  break;
+              }
+            } catch {
+              // Skip malformed JSON lines
+            }
+          }
+        }
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -74,32 +103,14 @@ export function useResearch(): UseResearchReturn {
           buffer = lines.pop() ?? "";
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              try {
-                const event: PipelineEvent = JSON.parse(data);
-                switch (event.type) {
-                  case "progress":
-                    setSteps(event.steps);
-                    break;
-                  case "section":
-                    setReport((prev) => ({
-                      ...prev,
-                      [event.sectionId]: event.data,
-                    }));
-                    break;
-                  case "complete":
-                    setState("complete");
-                    break;
-                  case "error":
-                    setError(event.message);
-                    setState("error");
-                    break;
-                }
-              } catch {
-                // Skip malformed JSON lines
-              }
-            }
+            processLine(line);
+          }
+        }
+
+        // Process any remaining data in the buffer
+        if (buffer.trim()) {
+          for (const line of buffer.split("\n")) {
+            processLine(line);
           }
         }
 
