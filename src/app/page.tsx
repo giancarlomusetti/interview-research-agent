@@ -1,65 +1,188 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { useResearch } from "@/hooks/use-research";
+import { SearchForm } from "@/components/search-form";
+import { ResearchProgress } from "@/components/research-progress";
+import { ReportView } from "@/components/report-view";
+import { Button } from "@/components/ui/button";
+import type { ResearchReport } from "@/lib/research/types";
+
+function reportToMarkdown(report: Partial<ResearchReport>): string {
+  const lines: string[] = [];
+
+  if (report.parsedJD) {
+    const jd = report.parsedJD;
+    lines.push(`# Interview Research: ${jd.roleTitle} at ${jd.companyName}\n`);
+    lines.push(`**Seniority:** ${jd.seniorityLevel}`);
+    if (jd.department) lines.push(`**Department:** ${jd.department}`);
+    if (jd.location) lines.push(`**Location:** ${jd.location}`);
+    if (jd.salaryRange) lines.push(`**Compensation:** ${jd.salaryRange}`);
+    lines.push(`\n${jd.summary}\n`);
+    lines.push(`**Required Skills:** ${jd.requiredSkills.join(", ")}\n`);
+    lines.push(`**Responsibilities:**`);
+    jd.responsibilities.forEach((r) => lines.push(`- ${r}`));
+    lines.push("");
+  }
+
+  if (report.companyOverview) {
+    const co = report.companyOverview;
+    lines.push(`## Company Overview\n`);
+    lines.push(co.description);
+    if (co.industry) lines.push(`\n**Industry:** ${co.industry}`);
+    if (co.founded) lines.push(`**Founded:** ${co.founded}`);
+    if (co.headquarters) lines.push(`**HQ:** ${co.headquarters}`);
+    if (co.employeeCount) lines.push(`**Employees:** ${co.employeeCount}`);
+    if (co.mission) lines.push(`\n> ${co.mission}`);
+    lines.push(`\n**Key Facts:**`);
+    co.keyFacts.forEach((f) => lines.push(`- ${f}`));
+    lines.push("");
+  }
+
+  if (report.recentNews) {
+    lines.push(`## Recent News\n`);
+    lines.push(`*${report.recentNews.overallNarrative}*\n`);
+    report.recentNews.items.forEach((item) => {
+      lines.push(`### ${item.headline}${item.date ? ` (${item.date})` : ""}`);
+      lines.push(item.summary);
+      lines.push(`**Relevance:** ${item.relevanceToRole}\n`);
+    });
+  }
+
+  if (report.financials) {
+    const f = report.financials;
+    lines.push(`## Funding & Financials\n`);
+    lines.push(`**Status:** ${f.publicOrPrivate}`);
+    if (f.totalFundingRaised) lines.push(`**Total Raised:** ${f.totalFundingRaised}`);
+    if (f.lastFundingRound) lines.push(`**Last Round:** ${f.lastFundingRound}`);
+    if (f.valuation) lines.push(`**Valuation:** ${f.valuation}`);
+    if (f.keyInvestors?.length) lines.push(`**Key Investors:** ${f.keyInvestors.join(", ")}`);
+    lines.push(`\n${f.financialHealth}\n`);
+  }
+
+  if (report.keyPeople) {
+    lines.push(`## Key People\n`);
+    report.keyPeople.people.forEach((p) => {
+      lines.push(`- **${p.name}** — ${p.title}: ${p.background}`);
+    });
+    lines.push(`\n> **Interview Tip:** ${report.keyPeople.interviewTip}\n`);
+  }
+
+  if (report.techAndProduct) {
+    const tp = report.techAndProduct;
+    lines.push(`## Product & Tech Stack\n`);
+    tp.products.forEach((p) => lines.push(`- **${p.name}:** ${p.description}`));
+    if (tp.techStack?.length) lines.push(`\n**Tech Stack:** ${tp.techStack.join(", ")}`);
+    if (tp.engineeringCulture) lines.push(`\n**Engineering Culture:** ${tp.engineeringCulture}`);
+    lines.push("");
+  }
+
+  if (report.cultureSentiment) {
+    const cs = report.cultureSentiment;
+    lines.push(`## Culture & Sentiment\n`);
+    lines.push(`*${cs.overallSentiment}*\n`);
+    if (cs.glassdoorRating) lines.push(`**Glassdoor Rating:** ${cs.glassdoorRating}`);
+    lines.push(`\n**Positives:**`);
+    cs.positives.forEach((p) => lines.push(`- ${p}`));
+    lines.push(`\n**Criticisms:**`);
+    cs.negatives.forEach((n) => lines.push(`- ${n}`));
+    lines.push("");
+  }
+
+  if (report.interviewPrep) {
+    const ip = report.interviewPrep;
+    lines.push(`## Interview Preparation\n`);
+    lines.push(`**Strategy:** ${ip.overallStrategy}\n`);
+    lines.push(`### Questions They'll Ask You\n`);
+    ip.questionsTheyWillAsk.forEach((q, i) => {
+      lines.push(`${i + 1}. **${q.question}** [${q.category}]`);
+      lines.push(`   - Why: ${q.whyTheyAsk}`);
+      lines.push(`   - Approach: ${q.suggestedApproach}\n`);
+    });
+    lines.push(`### Questions You Should Ask\n`);
+    ip.questionsYouShouldAsk.forEach((q, i) => {
+      lines.push(`${i + 1}. **${q.question}**`);
+      lines.push(`   - ${q.rationale}\n`);
+    });
+    lines.push(`### Key Talking Points\n`);
+    ip.keyTalkingPoints.forEach((tp) => {
+      lines.push(`- **${tp.point}** — ${tp.context}`);
+    });
+  }
+
+  return lines.join("\n");
+}
 
 export default function Home() {
+  const { state, steps, report, error, startResearch, reset } = useResearch();
+  const [copied, setCopied] = useState(false);
+  const isLoading = state === "loading";
+
+  async function handleCopyMarkdown() {
+    const md = reportToMarkdown(report);
+    await navigator.clipboard.writeText(md);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="max-w-3xl mx-auto px-4 py-12 sm:py-20">
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">
+          Interview Research Agent
+        </h1>
+        <p className="text-muted-foreground max-w-lg mx-auto">
+          Paste a job description and get a comprehensive, role-aware research
+          briefing with tailored interview prep.
+        </p>
+      </div>
+
+      {/* Search Form */}
+      {state === "idle" || state === "error" ? (
+        <div className="mb-8">
+          <SearchForm onSubmit={startResearch} disabled={false} />
+          {error && (
+            <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
+              {error}
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : null}
+
+      {/* Loading state: form disabled + progress */}
+      {isLoading && (
+        <div className="space-y-6 mb-8">
+          <SearchForm onSubmit={() => {}} disabled={true} />
+          <ResearchProgress steps={steps} />
         </div>
-      </main>
-    </div>
+      )}
+
+      {/* Complete state: action buttons */}
+      {state === "complete" && (
+        <div className="flex gap-3 mb-6 animate-in fade-in duration-500">
+          <Button onClick={handleCopyMarkdown} variant="outline" size="sm">
+            <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            {copied ? "Copied!" : "Copy as Markdown"}
+          </Button>
+          <Button onClick={reset} variant="outline" size="sm">
+            New Research
+          </Button>
+        </div>
+      )}
+
+      {/* Report */}
+      <ReportView report={report} />
+
+      {/* Footer */}
+      <footer className="mt-16 pt-8 border-t border-border text-center text-xs text-muted-foreground">
+        <p>
+          Built with Next.js, OpenAI, and Tavily. Research is AI-generated
+          and may contain inaccuracies.
+        </p>
+      </footer>
+    </main>
   );
 }

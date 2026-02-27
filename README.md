@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Interview Research Agent
+
+AI-powered interview preparation tool. Paste a job description and get a comprehensive, role-aware research briefing with tailored interview prep in ~20 seconds.
+
+## What It Does
+
+1. **Parses the job description** — extracts company, role, skills, responsibilities, seniority
+2. **Researches the company** (6 parallel research streams):
+   - Company overview
+   - Recent news
+   - Funding & financials
+   - Key people / leadership
+   - Products & tech stack
+   - Culture & employee sentiment
+3. **Generates interview prep** — questions they'll ask, questions to ask them, tailored talking points
+
+Everything is filtered through the lens of the specific role — not generic advice.
+
+## Architecture
+
+```
+Client (React)  ─── SSE ───>  /api/research (Next.js Route Handler)
+                                    │
+                        ┌───────────┤
+                        ▼           ▼
+                   Tavily API   OpenAI GPT-4o
+                   (web search) (structured output)
+```
+
+**Pipeline**: 8 steps with 3-wave parallelization (parse JD → 3 parallel → 3 parallel → interview prep synthesis)
+
+**Streaming**: Server-Sent Events emit progress updates and section data as each step completes, so the UI renders incrementally.
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router) + TypeScript (strict)
+- **Styling**: Tailwind CSS + shadcn/ui, dark theme
+- **AI**: OpenAI GPT-4o via Vercel AI SDK (`generateObject` for structured output)
+- **Search**: Tavily API (web search for company research)
+- **Rate Limiting**: In-memory, 10 requests/IP/day
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- OpenAI API key ([platform.openai.com](https://platform.openai.com))
+- Tavily API key ([tavily.com](https://tavily.com) — free tier: 1,000 searches/month)
+
+### Setup
 
 ```bash
+git clone <repo-url>
+cd interview-research-agent
+npm install
+
+# Copy env template and add your keys
+cp .env.example .env.local
+# Edit .env.local with your API keys
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes | OpenAI API key |
+| `TAVILY_API_KEY` | Yes | Tavily search API key |
+| `OPENAI_MODEL` | No | Override model (default: `gpt-4o`) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy to Vercel
 
-## Learn More
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
-To learn more about Next.js, take a look at the following resources:
+1. Import the repo
+2. Add `OPENAI_API_KEY` and `TAVILY_API_KEY` as environment variables
+3. Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The rate limiter uses in-memory storage, so it resets on each deployment/cold start. For production, consider Upstash Redis.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── page.tsx                  # Main page (client component)
+│   └── api/research/route.ts     # SSE streaming endpoint
+├── components/
+│   ├── search-form.tsx           # JD input with example chips
+│   ├── research-progress.tsx     # Step-by-step progress tracker
+│   ├── report-view.tsx           # Report container
+│   └── report-sections/          # Individual report cards
+├── hooks/
+│   └── use-research.ts           # SSE consumer hook
+└── lib/
+    ├── ai/
+    │   ├── provider.ts           # LLM abstraction (OpenAI)
+    │   └── prompts.ts            # All prompt templates
+    ├── research/
+    │   ├── pipeline.ts           # Orchestrator with parallelization
+    │   ├── types.ts              # Zod schemas + TypeScript types
+    │   └── steps/                # Individual research steps
+    ├── search/
+    │   └── client.ts             # Tavily wrapper
+    └── rate-limit.ts             # In-memory IP rate limiter
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Budget Per Research
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- ~10-12 Tavily searches
+- 8 OpenAI structured output calls
+- Supports ~80-100 researches/month on Tavily free tier
+
+## Future Improvements
+
+- Resume input for gap analysis + strength mapping
+- Save/share reports (Supabase + shareable URLs)
+- PDF export
+- Upstash Redis for durable rate limiting
+- Cache popular companies
+- Additional data sources (Crunchbase API, LinkedIn, etc.)
