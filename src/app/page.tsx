@@ -8,6 +8,11 @@ import { ReportView } from "@/components/report-view";
 import { Button } from "@/components/ui/button";
 import type { ResearchReport } from "@/lib/research/types";
 
+function formatSources(sources: Array<{ title: string; url: string }> | null | undefined): string[] {
+  if (!sources || sources.length === 0) return [];
+  return ["", "**Sources:**", ...sources.map((s) => `- [${s.title}](${s.url})`)];
+}
+
 function reportToMarkdown(report: Partial<ResearchReport>): string {
   const lines: string[] = [];
 
@@ -36,6 +41,7 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     if (co.mission) lines.push(`\n> ${co.mission}`);
     lines.push(`\n**Key Facts:**`);
     co.keyFacts.forEach((f) => lines.push(`- ${f}`));
+    lines.push(...formatSources(co.sources));
     lines.push("");
   }
 
@@ -45,7 +51,9 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     report.recentNews.items.forEach((item) => {
       lines.push(`### ${item.headline}${item.date ? ` (${item.date})` : ""}`);
       lines.push(item.summary);
-      lines.push(`**Relevance:** ${item.relevanceToRole}\n`);
+      lines.push(`**Relevance:** ${item.relevanceToRole}`);
+      if (item.sourceUrl) lines.push(`[Source](${item.sourceUrl})`);
+      lines.push("");
     });
   }
 
@@ -57,7 +65,9 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     if (f.lastFundingRound) lines.push(`**Last Round:** ${f.lastFundingRound}`);
     if (f.valuation) lines.push(`**Valuation:** ${f.valuation}`);
     if (f.keyInvestors?.length) lines.push(`**Key Investors:** ${f.keyInvestors.join(", ")}`);
-    lines.push(`\n${f.financialHealth}\n`);
+    lines.push(`\n${f.financialHealth}`);
+    lines.push(...formatSources(f.sources));
+    lines.push("");
   }
 
   if (report.keyPeople) {
@@ -65,7 +75,9 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     report.keyPeople.people.forEach((p) => {
       lines.push(`- **${p.name}** — ${p.title}: ${p.background}`);
     });
-    lines.push(`\n> **Interview Tip:** ${report.keyPeople.interviewTip}\n`);
+    lines.push(`\n> **Interview Tip:** ${report.keyPeople.interviewTip}`);
+    lines.push(...formatSources(report.keyPeople.sources));
+    lines.push("");
   }
 
   if (report.techAndProduct) {
@@ -74,6 +86,7 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     tp.products.forEach((p) => lines.push(`- **${p.name}:** ${p.description}`));
     if (tp.techStack?.length) lines.push(`\n**Tech Stack:** ${tp.techStack.join(", ")}`);
     if (tp.engineeringCulture) lines.push(`\n**Engineering Culture:** ${tp.engineeringCulture}`);
+    lines.push(...formatSources(tp.sources));
     lines.push("");
   }
 
@@ -86,7 +99,26 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     cs.positives.forEach((p) => lines.push(`- ${p}`));
     lines.push(`\n**Criticisms:**`);
     cs.negatives.forEach((n) => lines.push(`- ${n}`));
+    lines.push(...formatSources(cs.sources));
     lines.push("");
+  }
+
+  if (report.layoffs) {
+    const lo = report.layoffs;
+    lines.push(`## Layoffs & Restructuring\n`);
+    if (!lo.hasLayoffs) {
+      lines.push(`No significant layoffs or restructuring events found.\n`);
+    } else {
+      lo.events.forEach((event) => {
+        lines.push(`### ${event.description}${event.date ? ` (${event.date})` : ""}`);
+        if (event.affectedCount) lines.push(`**Affected:** ${event.affectedCount}`);
+        if (event.approach) lines.push(`**Approach:** ${event.approach}`);
+        if (event.sourceUrl) lines.push(`[Source](${event.sourceUrl})`);
+        lines.push("");
+      });
+      lines.push(`**Overall Approach:** ${lo.overallApproach}`);
+      lines.push(`**Public Sentiment:** ${lo.sentiment}\n`);
+    }
   }
 
   if (report.interviewPrep) {

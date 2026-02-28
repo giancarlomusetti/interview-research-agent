@@ -18,7 +18,8 @@ export async function generateInterviewPrep(
       JSON.stringify(report.financials ?? {}, null, 2),
       JSON.stringify(report.keyPeople ?? {}, null, 2),
       JSON.stringify(report.techAndProduct ?? {}, null, 2),
-      JSON.stringify(report.cultureSentiment ?? {}, null, 2)
+      JSON.stringify(report.cultureSentiment ?? {}, null, 2),
+      JSON.stringify(report.layoffs ?? {}, null, 2)
     ),
     schema: InterviewPrepSchema,
     schemaName: "InterviewPrep",

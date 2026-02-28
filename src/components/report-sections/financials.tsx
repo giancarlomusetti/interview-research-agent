@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SourceLinks } from "./source-links";
 import type { Financials as FinancialsType } from "@/lib/research/types";
 
 export function FinancialsSection({ data }: { data: FinancialsType }) {
@@ -55,6 +56,8 @@ export function FinancialsSection({ data }: { data: FinancialsType }) {
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Financial Health</p>
           <p className="text-sm text-muted-foreground">{data.financialHealth}</p>
         </div>
+
+        <SourceLinks sources={data.sources} />
       </CardContent>
     </Card>
   );

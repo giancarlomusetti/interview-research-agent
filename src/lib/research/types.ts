@@ -15,6 +15,12 @@ export const ParsedJDSchema = z.object({
 });
 export type ParsedJD = z.infer<typeof ParsedJDSchema>;
 
+// Reusable source link schema
+export const SourceLinkSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+});
+
 // Step 1: Company Overview
 export const CompanyOverviewSchema = z.object({
   name: z.string(),
@@ -26,6 +32,7 @@ export const CompanyOverviewSchema = z.object({
   mission: z.string().nullable().describe("Company mission or vision statement"),
   website: z.string().nullable(),
   keyFacts: z.array(z.string()).describe("3-5 notable facts about the company"),
+  sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
 });
 export type CompanyOverview = z.infer<typeof CompanyOverviewSchema>;
 
@@ -52,6 +59,7 @@ export const FinancialsSchema = z.object({
   valuation: z.string().nullable(),
   revenueInfo: z.string().nullable().describe("Any known revenue figures or growth metrics"),
   financialHealth: z.string().describe("Brief assessment of financial trajectory"),
+  sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
 });
 export type Financials = z.infer<typeof FinancialsSchema>;
 
@@ -65,6 +73,7 @@ export const PersonSchema = z.object({
 export const KeyPeopleSchema = z.object({
   people: z.array(PersonSchema).describe("Up to 6 key people"),
   interviewTip: z.string().describe("How to leverage this info in your interview"),
+  sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
 });
 export type KeyPeople = z.infer<typeof KeyPeopleSchema>;
 
@@ -78,6 +87,7 @@ export const TechAndProductSchema = z.object({
   engineeringCulture: z.string().nullable().describe("Engineering practices, blog posts, open source"),
   recentLaunches: z.array(z.string()).nullable().describe("Recent product launches or features"),
   relevanceToRole: z.string().describe("How the tech/product landscape connects to this specific role"),
+  sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
 });
 export type TechAndProduct = z.infer<typeof TechAndProductSchema>;
 
@@ -90,10 +100,27 @@ export const CultureSentimentSchema = z.object({
   remotePolicy: z.string().nullable(),
   interviewProcess: z.string().nullable().describe("What candidates report about the interview process"),
   overallSentiment: z.string().describe("1-2 sentence summary of employee sentiment"),
+  sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
 });
 export type CultureSentiment = z.infer<typeof CultureSentimentSchema>;
 
-// Step 7: Interview Prep
+// Step 7: Layoffs & Restructuring
+export const LayoffEventSchema = z.object({
+  date: z.string().nullable(),
+  affectedCount: z.string().nullable().describe("Number or percentage affected"),
+  description: z.string(),
+  approach: z.string().nullable().describe("Severance, voluntary, criticism, etc."),
+  sourceUrl: z.string().nullable(),
+});
+export const LayoffsSchema = z.object({
+  hasLayoffs: z.boolean().describe("Whether the company has had notable layoffs"),
+  events: z.array(LayoffEventSchema).describe("Individual layoff events"),
+  overallApproach: z.string().describe("Summary of how the company handles layoffs"),
+  sentiment: z.string().describe("Public/employee reaction to layoffs"),
+});
+export type Layoffs = z.infer<typeof LayoffsSchema>;
+
+// Step 8: Interview Prep
 export const InterviewQuestionSchema = z.object({
   question: z.string(),
   category: z.string().describe("technical, behavioral, company-specific, or role-specific"),
@@ -125,6 +152,7 @@ export interface ResearchReport {
   keyPeople?: KeyPeople;
   techAndProduct?: TechAndProduct;
   cultureSentiment?: CultureSentiment;
+  layoffs?: Layoffs;
   interviewPrep?: InterviewPrep;
 }
 

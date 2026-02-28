@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SourceLinks } from "./source-links";
 import type { KeyPeople as KeyPeopleType } from "@/lib/research/types";
 
 export function KeyPeopleSection({ data }: { data: KeyPeopleType }) {
@@ -29,6 +30,8 @@ export function KeyPeopleSection({ data }: { data: KeyPeopleType }) {
           <p className="text-xs text-primary/80 font-medium mb-1">Interview Tip</p>
           <p className="text-sm text-muted-foreground">{data.interviewTip}</p>
         </div>
+
+        <SourceLinks sources={data.sources} />
       </CardContent>
     </Card>
   );

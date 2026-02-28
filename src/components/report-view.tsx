@@ -8,6 +8,7 @@ import { FinancialsSection } from "./report-sections/financials";
 import { KeyPeopleSection } from "./report-sections/key-people";
 import { TechAndProductSection } from "./report-sections/tech-and-product";
 import { CultureSentimentSection } from "./report-sections/culture-sentiment";
+import { LayoffsSection } from "./report-sections/layoffs";
 import { InterviewPrepSection } from "./report-sections/interview-prep";
 
 interface ReportViewProps {
@@ -23,6 +24,7 @@ export function ReportView({ report }: ReportViewProps) {
     report.keyPeople ||
     report.techAndProduct ||
     report.cultureSentiment ||
+    report.layoffs ||
     report.interviewPrep;
 
   if (!hasSections) return null;
@@ -42,6 +44,7 @@ export function ReportView({ report }: ReportViewProps) {
       {report.keyPeople && <KeyPeopleSection data={report.keyPeople} />}
       {report.techAndProduct && <TechAndProductSection data={report.techAndProduct} />}
       {report.cultureSentiment && <CultureSentimentSection data={report.cultureSentiment} />}
+      {report.layoffs && <LayoffsSection data={report.layoffs} />}
       {report.interviewPrep && <InterviewPrepSection data={report.interviewPrep} />}
     </div>
   );

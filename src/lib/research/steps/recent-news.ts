@@ -4,9 +4,10 @@ import { search, formatSearchResults } from "@/lib/search/client";
 import { RecentNewsSchema, type RecentNews, type ParsedJD } from "../types";
 
 export async function researchRecentNews(jd: ParsedJD): Promise<RecentNews> {
-  const results = await search(`${jd.companyName} latest news 2025 2026`, {
+  const results = await search(`${jd.companyName} latest news`, {
     topic: "news",
     maxResults: 8,
+    days: 180,
   });
 
   return generateStructured({

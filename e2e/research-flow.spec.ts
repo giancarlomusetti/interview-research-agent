@@ -90,12 +90,19 @@ test.describe("Interview Research Agent", () => {
     // Culture & Sentiment
     await expect(page.getByText("Culture & Sentiment")).toBeVisible({ timeout: 45_000 });
 
+    // Layoffs & Restructuring
+    await expect(page.getByText("Layoffs & Restructuring")).toBeVisible({ timeout: 45_000 });
+
     // Interview Preparation (last section — depends on all prior data)
     await expect(page.getByText("Interview Preparation")).toBeVisible({ timeout: 60_000 });
 
     // Action buttons should appear after completion
     await expect(page.getByRole("button", { name: /copy as markdown/i })).toBeVisible({ timeout: 60_000 });
     await expect(page.getByRole("button", { name: /new research/i })).toBeVisible();
+
+    // Source links should be rendered (at least one external link in the report)
+    const sourceLinks = page.locator('a[target="_blank"]');
+    await expect(sourceLinks.first()).toBeVisible({ timeout: 5_000 });
   });
 
   test("new research button resets the form", async ({ page }) => {

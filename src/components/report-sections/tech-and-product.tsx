@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SourceLinks } from "./source-links";
 import type { TechAndProduct as TechAndProductType } from "@/lib/research/types";
 
 export function TechAndProductSection({ data }: { data: TechAndProductType }) {
@@ -63,6 +64,8 @@ export function TechAndProductSection({ data }: { data: TechAndProductType }) {
           <p className="text-xs text-primary/80 font-medium mb-1">Relevance to Your Role</p>
           <p className="text-sm text-muted-foreground">{data.relevanceToRole}</p>
         </div>
+
+        <SourceLinks sources={data.sources} />
       </CardContent>
     </Card>
   );

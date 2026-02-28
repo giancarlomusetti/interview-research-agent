@@ -17,13 +17,17 @@ export interface SearchResult {
 
 export async function search(
   query: string,
-  options?: { topic?: "general" | "news"; maxResults?: number }
+  options?: { topic?: "general" | "news"; maxResults?: number; days?: number }
 ): Promise<SearchResult[]> {
-  const response = await getClient().search(query, {
+  const searchOptions: Record<string, unknown> = {
     topic: options?.topic ?? "general",
     maxResults: options?.maxResults ?? 5,
     includeAnswer: false,
-  });
+  };
+  if (options?.days && options.topic === "news") {
+    searchOptions.days = options.days;
+  }
+  const response = await getClient().search(query, searchOptions);
 
   return response.results.map((r) => ({
     title: r.title,

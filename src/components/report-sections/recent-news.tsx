@@ -27,6 +27,16 @@ export function RecentNewsSection({ data }: { data: RecentNewsType }) {
               <p className="text-xs text-primary/80">
                 <span className="font-medium">Relevance:</span> {item.relevanceToRole}
               </p>
+              {item.sourceUrl && (
+                <a
+                  href={item.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary/70 hover:text-primary underline underline-offset-2 decoration-primary/30"
+                >
+                  Source &rarr;
+                </a>
+              )}
             </div>
           ))}
         </div>

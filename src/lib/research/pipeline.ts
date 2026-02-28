@@ -6,6 +6,7 @@ import { researchFinancials } from "./steps/financials";
 import { researchKeyPeople } from "./steps/key-people";
 import { researchTechAndProduct } from "./steps/tech-and-product";
 import { researchCulture } from "./steps/culture";
+import { researchLayoffs } from "./steps/layoffs";
 import { generateInterviewPrep } from "./steps/interview-prep";
 
 const STEPS: StepInfo[] = [
@@ -16,6 +17,7 @@ const STEPS: StepInfo[] = [
   { id: "key-people", label: "Key People", status: "pending" },
   { id: "tech-product", label: "Product & Tech Stack", status: "pending" },
   { id: "culture", label: "Culture & Sentiment", status: "pending" },
+  { id: "layoffs", label: "Layoffs & Restructuring", status: "pending" },
   { id: "interview-prep", label: "Interview Preparation", status: "pending" },
 ];
 
@@ -79,14 +81,15 @@ export async function runResearchPipeline(
       console.error("Financials failed:", financials.reason);
     }
 
-    // Wave 2: Key People, Tech & Product, Culture (parallel)
-    const wave2StepIds = ["key-people", "tech-product", "culture"];
+    // Wave 2: Key People, Tech & Product, Culture, Layoffs (parallel)
+    const wave2StepIds = ["key-people", "tech-product", "culture", "layoffs"];
     wave2StepIds.forEach((id) => updateStep(id, "running"));
 
-    const [keyPeople, techAndProduct, culture] = await Promise.allSettled([
+    const [keyPeople, techAndProduct, culture, layoffs] = await Promise.allSettled([
       researchKeyPeople(report.parsedJD),
       researchTechAndProduct(report.parsedJD),
       researchCulture(report.parsedJD),
+      researchLayoffs(report.parsedJD),
     ]);
 
     if (keyPeople.status === "fulfilled") {
@@ -114,6 +117,15 @@ export async function runResearchPipeline(
     } else {
       updateStep("culture", "error");
       console.error("Culture failed:", culture.reason);
+    }
+
+    if (layoffs.status === "fulfilled") {
+      report.layoffs = layoffs.value;
+      updateStep("layoffs", "completed");
+      emit({ type: "section", sectionId: "layoffs", data: report.layoffs });
+    } else {
+      updateStep("layoffs", "error");
+      console.error("Layoffs failed:", layoffs.reason);
     }
 
     // Wave 3: Interview Prep (needs all prior data)

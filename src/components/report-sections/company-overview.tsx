@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SourceLinks } from "./source-links";
 import type { CompanyOverview as CompanyOverviewType } from "@/lib/research/types";
 
 export function CompanyOverviewSection({ data }: { data: CompanyOverviewType }) {
@@ -59,6 +60,8 @@ export function CompanyOverviewSection({ data }: { data: CompanyOverviewType }) 
             ))}
           </ul>
         </div>
+
+        <SourceLinks sources={data.sources} />
       </CardContent>
     </Card>
   );

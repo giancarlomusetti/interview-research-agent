@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SourceLinks } from "./source-links";
 import type { CultureSentiment as CultureSentimentType } from "@/lib/research/types";
 
 export function CultureSentimentSection({ data }: { data: CultureSentimentType }) {
@@ -76,6 +77,8 @@ export function CultureSentimentSection({ data }: { data: CultureSentimentType }
             <p className="text-sm text-muted-foreground">{data.interviewProcess}</p>
           </div>
         )}
+
+        <SourceLinks sources={data.sources} />
       </CardContent>
     </Card>
   );
