@@ -13,6 +13,7 @@ export interface SearchResult {
   url: string;
   content: string;
   score: number;
+  publishedDate: string | null;
 }
 
 export async function search(
@@ -34,6 +35,7 @@ export async function search(
     url: r.url,
     content: r.content,
     score: r.score,
+    publishedDate: r.publishedDate || null,
   }));
 }
 
@@ -41,7 +43,7 @@ export function formatSearchResults(results: SearchResult[]): string {
   return results
     .map(
       (r, i) =>
-        `[${i + 1}] ${r.title}\nURL: ${r.url}\n${r.content}\n`
+        `[${i + 1}] ${r.title}\nURL: ${r.url}${r.publishedDate ? `\nPublished: ${r.publishedDate}` : ""}\n${r.content}\n`
     )
     .join("\n---\n");
 }

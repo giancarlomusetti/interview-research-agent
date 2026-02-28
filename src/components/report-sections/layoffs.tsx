@@ -6,7 +6,7 @@ import type { Layoffs as LayoffsType } from "@/lib/research/types";
 export function LayoffsSection({ data }: { data: LayoffsType }) {
   return (
     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-0">
         <CardTitle className="text-lg flex items-center gap-2">
           <span className="text-xl">📉</span> Layoffs & Restructuring
         </CardTitle>

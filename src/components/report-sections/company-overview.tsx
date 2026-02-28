@@ -7,7 +7,7 @@ import type { CompanyOverview as CompanyOverviewType } from "@/lib/research/type
 export function CompanyOverviewSection({ data }: { data: CompanyOverviewType }) {
   return (
     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-0">
         <CardTitle className="text-lg flex items-center gap-2">
           <span className="text-xl">🏢</span> Company Overview
         </CardTitle>

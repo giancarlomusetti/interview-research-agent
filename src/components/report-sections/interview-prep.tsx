@@ -14,7 +14,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export function InterviewPrepSection({ data }: { data: InterviewPrepType }) {
   return (
     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 border-primary/20">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-0">
         <CardTitle className="text-lg flex items-center gap-2">
           <span className="text-xl">🎯</span> Interview Preparation
         </CardTitle>
