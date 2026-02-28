@@ -24,6 +24,7 @@ export const SourceLinkSchema = z.object({
 // Step 1: Company Overview
 export const CompanyOverviewSchema = z.object({
   name: z.string(),
+  noBSSummary: z.string().describe("2-3 sentence no-bullshit summary of what the company does, what problem they solve, and why it matters. Be specific about the market, traction, and product-market fit. Example: 'SQUIRE solves barbershop chaos: walk-in vs appointment conflicts, chair rental disputes, per-barber payouts, client retention. $2B+ payments processed = proven PMF in $5B fragmented industry.'"),
   description: z.string().describe("1-2 paragraph company description"),
   founded: z.string().nullable(),
   headquarters: z.string().nullable(),
@@ -93,13 +94,16 @@ export type TechAndProduct = z.infer<typeof TechAndProductSchema>;
 
 // Step 6: Culture & Sentiment
 export const CultureSentimentSchema = z.object({
+  sentimentHeadline: z.string().describe("Bold 3-5 word headline like 'HIGH OWNERSHIP, HIGH PRESSURE' or 'COLLABORATIVE BUT SLOW-MOVING'"),
   glassdoorRating: z.string().nullable().describe("Overall rating if found"),
   positives: z.array(z.string()).describe("What employees like"),
   negatives: z.array(z.string()).describe("Common criticisms"),
+  seniorReality: z.string().nullable().describe("What the culture specifically means for senior/staff-level candidates — e.g. 'Expect to own entire subsystems with minimal direction'"),
   companyValues: z.array(z.string()).nullable().describe("Stated company values"),
   remotePolicy: z.string().nullable(),
   interviewProcess: z.string().nullable().describe("What candidates report about the interview process"),
   overallSentiment: z.string().describe("1-2 sentence summary of employee sentiment"),
+  suggestedInterviewFraming: z.string().nullable().describe("How to frame culture-fit answers — e.g. 'Emphasize autonomy and bias-for-action over process-heavy examples'"),
   sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
 });
 export type CultureSentiment = z.infer<typeof CultureSentimentSchema>;
@@ -117,6 +121,8 @@ export const LayoffsSchema = z.object({
   events: z.array(LayoffEventSchema).describe("Individual layoff events"),
   overallApproach: z.string().describe("Summary of how the company handles layoffs"),
   sentiment: z.string().describe("Public/employee reaction to layoffs"),
+  signalInterpretation: z.string().describe("Whether layoffs signal distress (revenue decline, failed product) or discipline (post-acquisition restructuring, strategic pivot). Use language like 'DISTRESS SIGNAL' or 'STRATEGIC DISCIPLINE'"),
+  suggestedQuestion: z.string().nullable().describe("A tactful question the candidate could ask about stability — e.g. 'How has the team's scope evolved since the recent restructuring?'"),
 });
 export type Layoffs = z.infer<typeof LayoffsSchema>;
 
@@ -138,7 +144,7 @@ export const TalkingPointSchema = z.object({
 export const InterviewPrepSchema = z.object({
   questionsTheyWillAsk: z.array(InterviewQuestionSchema).describe("8 likely interview questions"),
   questionsYouShouldAsk: z.array(CandidateQuestionSchema).describe("5 smart questions to ask"),
-  keyTalkingPoints: z.array(TalkingPointSchema).describe("5-7 tailored talking points"),
+  keyTalkingPoints: z.array(TalkingPointSchema).describe("5-6 succinct talking points"),
   overallStrategy: z.string().describe("2-3 sentence interview strategy recommendation"),
 });
 export type InterviewPrep = z.infer<typeof InterviewPrepSchema>;

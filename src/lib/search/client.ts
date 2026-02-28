@@ -39,6 +39,23 @@ export async function search(
   }));
 }
 
+/**
+ * Builds a disambiguated search query by adding a few context words from the JD summary.
+ * Prevents Tavily from returning results about the wrong "Squire", "Bolt", etc.
+ * Keeps the query short — search engines choke on full sentences.
+ */
+export function companyQuery(companyName: string, summary: string, ...keywords: string[]): string {
+  // Extract a few disambiguating nouns from the summary (skip common filler words)
+  const stopWords = new Set(["a", "an", "the", "is", "are", "at", "in", "on", "to", "for", "of", "and", "or", "with", "as", "by", "this", "that", "role", "position", "team", "join", "looking", "seeking", "will", "you", "we", "our", "their", "your", "be", "has", "have", "from", "about"]);
+  const contextWords = summary
+    .split(/[\s,.;:]+/)
+    .map((w) => w.toLowerCase().replace(/[^a-z0-9]/g, ""))
+    .filter((w) => w.length > 2 && !stopWords.has(w) && w !== companyName.toLowerCase())
+    .slice(0, 3)
+    .join(" ");
+  return `${companyName} ${keywords.join(" ")} ${contextWords}`;
+}
+
 export function formatSearchResults(results: SearchResult[]): string {
   return results
     .map(

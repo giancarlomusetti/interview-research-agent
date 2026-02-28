@@ -9,7 +9,7 @@ export function JobAnalysis({ data }: { data: ParsedJD }) {
     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <CardHeader className="pb-0">
         <CardTitle className="text-lg flex items-center gap-2">
-          <span className="text-xl">📋</span> Job Analysis
+          <span className="text-xl">📋</span> Role Summary
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

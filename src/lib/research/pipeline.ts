@@ -10,9 +10,9 @@ import { researchLayoffs } from "./steps/layoffs";
 import { generateInterviewPrep } from "./steps/interview-prep";
 
 const STEPS: StepInfo[] = [
-  { id: "parse-jd", label: "Analyzing Job Description", status: "pending" },
+  { id: "parse-jd", label: "Parsing Role", status: "pending" },
   { id: "company-overview", label: "Company Overview", status: "pending" },
-  { id: "recent-news", label: "Recent News", status: "pending" },
+  { id: "recent-news", label: "News", status: "pending" },
   { id: "financials", label: "Funding & Financials", status: "pending" },
   { id: "key-people", label: "Key People", status: "pending" },
   { id: "tech-product", label: "Product & Tech Stack", status: "pending" },
@@ -50,7 +50,7 @@ export async function runResearchPipeline(
 
     const [companyOverview, recentNews, financials] = await Promise.allSettled([
       researchCompanyOverview(report.parsedJD),
-      researchRecentNews(report.parsedJD),
+      researchRecentNews(report.parsedJD, jobDescription),
       researchFinancials(report.parsedJD),
     ]);
 

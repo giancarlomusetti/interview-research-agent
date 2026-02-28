@@ -13,6 +13,11 @@ export function CultureSentimentSection({ data }: { data: CultureSentimentType }
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Bold sentiment headline */}
+        <p className="text-base font-bold tracking-tight text-foreground">
+          {data.sentimentHeadline}
+        </p>
+
         <p className="text-sm text-muted-foreground italic">{data.overallSentiment}</p>
 
         <div className="grid sm:grid-cols-2 gap-3">
@@ -30,6 +35,7 @@ export function CultureSentimentSection({ data }: { data: CultureSentimentType }
           )}
         </div>
 
+        {/* Quick pros/cons */}
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-emerald-500 uppercase tracking-wider mb-2 font-medium">What Employees Like</p>
@@ -55,19 +61,11 @@ export function CultureSentimentSection({ data }: { data: CultureSentimentType }
           </div>
         </div>
 
-        {data.companyValues && data.companyValues.length > 0 && (
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Company Values</p>
-            <div className="flex flex-wrap gap-1.5">
-              {data.companyValues.map((value) => (
-                <span
-                  key={value}
-                  className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground"
-                >
-                  {value}
-                </span>
-              ))}
-            </div>
+        {/* Senior Reality callout */}
+        {data.seniorReality && (
+          <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10">
+            <p className="text-xs text-blue-500 font-medium mb-1">Senior-Level Reality</p>
+            <p className="text-sm text-muted-foreground">{data.seniorReality}</p>
           </div>
         )}
 

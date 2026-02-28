@@ -69,29 +69,23 @@ test.describe("Interview Research Agent", () => {
     await expect(page.getByText(/research progress/i)).toBeVisible({ timeout: 10_000 });
 
     // Wait for the report sections to appear (these come in as SSE events)
-    // Job Analysis section (from parsed JD — should be first)
-    await expect(page.getByText("Job Analysis")).toBeVisible({ timeout: 30_000 });
+    // Role Summary (from parsed JD — should be first)
+    await expect(page.getByText("Role Summary")).toBeVisible({ timeout: 30_000 });
 
-    // Company Overview
-    await expect(page.getByText("Company Overview")).toBeVisible({ timeout: 30_000 });
+    // Culture & Sentiment (promoted — dealbreaker signal)
+    await expect(page.getByText("Culture & Sentiment")).toBeVisible({ timeout: 45_000 });
 
-    // Recent News
-    await expect(page.getByText("Recent News")).toBeVisible({ timeout: 30_000 });
+    // Layoffs & Stability (promoted — dealbreaker signal)
+    await expect(page.getByText("Layoffs & Stability")).toBeVisible({ timeout: 45_000 });
 
-    // Funding & Financials
-    await expect(page.getByText("Funding & Financials")).toBeVisible({ timeout: 30_000 });
+    // News
+    await expect(page.getByText("News")).toBeVisible({ timeout: 30_000 });
 
-    // Key People
-    await expect(page.getByText("Key People")).toBeVisible({ timeout: 45_000 });
+    // Company Snapshot (merged overview + financials)
+    await expect(page.getByText("Company Snapshot")).toBeVisible({ timeout: 30_000 });
 
     // Product & Tech Stack
     await expect(page.getByText("Product & Tech Stack")).toBeVisible({ timeout: 45_000 });
-
-    // Culture & Sentiment
-    await expect(page.getByText("Culture & Sentiment")).toBeVisible({ timeout: 45_000 });
-
-    // Layoffs & Restructuring
-    await expect(page.getByText("Layoffs & Restructuring")).toBeVisible({ timeout: 45_000 });
 
     // Interview Preparation (last section — depends on all prior data)
     await expect(page.getByText("Interview Preparation")).toBeVisible({ timeout: 60_000 });

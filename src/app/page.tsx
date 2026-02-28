@@ -16,6 +16,7 @@ function formatSources(sources: Array<{ title: string; url: string }> | null | u
 function reportToMarkdown(report: Partial<ResearchReport>): string {
   const lines: string[] = [];
 
+  // 1. Role Summary
   if (report.parsedJD) {
     const jd = report.parsedJD;
     lines.push(`# Interview Research: ${jd.roleTitle} at ${jd.companyName}\n`);
@@ -30,23 +31,46 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     lines.push("");
   }
 
-  if (report.companyOverview) {
-    const co = report.companyOverview;
-    lines.push(`## Company Overview\n`);
-    lines.push(co.description);
-    if (co.industry) lines.push(`\n**Industry:** ${co.industry}`);
-    if (co.founded) lines.push(`**Founded:** ${co.founded}`);
-    if (co.headquarters) lines.push(`**HQ:** ${co.headquarters}`);
-    if (co.employeeCount) lines.push(`**Employees:** ${co.employeeCount}`);
-    if (co.mission) lines.push(`\n> ${co.mission}`);
-    lines.push(`\n**Key Facts:**`);
-    co.keyFacts.forEach((f) => lines.push(`- ${f}`));
-    lines.push(...formatSources(co.sources));
+  // 2. Culture & Sentiment (promoted)
+  if (report.cultureSentiment) {
+    const cs = report.cultureSentiment;
+    lines.push(`## Culture & Sentiment\n`);
+    lines.push(`**${cs.sentimentHeadline}**\n`);
+    lines.push(`*${cs.overallSentiment}*\n`);
+    if (cs.glassdoorRating) lines.push(`**Glassdoor Rating:** ${cs.glassdoorRating}`);
+    lines.push(`\n**Positives:**`);
+    cs.positives.forEach((p) => lines.push(`- ${p}`));
+    lines.push(`\n**Criticisms:**`);
+    cs.negatives.forEach((n) => lines.push(`- ${n}`));
+    if (cs.seniorReality) lines.push(`\n**Senior-Level Reality:** ${cs.seniorReality}`);
+    lines.push(...formatSources(cs.sources));
     lines.push("");
   }
 
+  // 3. Layoffs & Stability (promoted)
+  if (report.layoffs) {
+    const lo = report.layoffs;
+    lines.push(`## Layoffs & Stability\n`);
+    if (!lo.hasLayoffs) {
+      lines.push(`No significant layoffs or restructuring events found.\n`);
+    } else {
+      lines.push(`**Signal:** ${lo.signalInterpretation}\n`);
+      lo.events.forEach((event) => {
+        const datePart = event.date ?? "Unknown date";
+        const countPart = event.affectedCount ? `${event.affectedCount} — ` : "";
+        lines.push(`- **${datePart}:** ${countPart}${event.description}`);
+        if (event.approach) lines.push(`  - Approach: ${event.approach}`);
+      });
+      lines.push(`\n**Overall Approach:** ${lo.overallApproach}`);
+      lines.push(`**Public Sentiment:** ${lo.sentiment}`);
+      if (lo.suggestedQuestion) lines.push(`\n> **Question to Ask:** "${lo.suggestedQuestion}"`);
+      lines.push("");
+    }
+  }
+
+  // 4. News
   if (report.recentNews) {
-    lines.push(`## Recent News\n`);
+    lines.push(`## News\n`);
     lines.push(`*${report.recentNews.overallNarrative}*\n`);
     report.recentNews.items.forEach((item) => {
       lines.push(`### ${item.headline}${item.date ? ` (${item.date})` : ""}`);
@@ -57,29 +81,33 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     });
   }
 
-  if (report.financials) {
-    const f = report.financials;
-    lines.push(`## Funding & Financials\n`);
-    lines.push(`**Status:** ${f.publicOrPrivate}`);
-    if (f.totalFundingRaised) lines.push(`**Total Raised:** ${f.totalFundingRaised}`);
-    if (f.lastFundingRound) lines.push(`**Last Round:** ${f.lastFundingRound}`);
-    if (f.valuation) lines.push(`**Valuation:** ${f.valuation}`);
-    if (f.keyInvestors?.length) lines.push(`**Key Investors:** ${f.keyInvestors.join(", ")}`);
-    lines.push(`\n${f.financialHealth}`);
-    lines.push(...formatSources(f.sources));
+  // 5. Company Snapshot (merged overview + financials)
+  if (report.companyOverview) {
+    const co = report.companyOverview;
+    lines.push(`## Company Snapshot\n`);
+    lines.push(co.noBSSummary);
+    // Key numbers
+    const stats: string[] = [];
+    if (co.employeeCount) stats.push(`**Employees:** ${co.employeeCount}`);
+    if (co.founded) stats.push(`**Founded:** ${co.founded}`);
+    if (report.financials) {
+      const f = report.financials;
+      stats.push(`**Status:** ${f.publicOrPrivate}`);
+      if (f.valuation) stats.push(`**Valuation:** ${f.valuation}`);
+      if (f.totalFundingRaised) stats.push(`**Total Raised:** ${f.totalFundingRaised}`);
+      if (f.lastFundingRound) stats.push(`**Last Round:** ${f.lastFundingRound}`);
+    }
+    if (stats.length > 0) lines.push(`\n${stats.join(" | ")}`);
+    if (report.financials?.financialHealth) lines.push(`\n**Financial health:** ${report.financials.financialHealth}`);
+    if (report.financials?.keyInvestors?.length) lines.push(`**Investors:** ${report.financials.keyInvestors.join(", ")}`);
+    lines.push(`\n**Key Facts:**`);
+    co.keyFacts.forEach((f) => lines.push(`- ${f}`));
+    lines.push(...formatSources(co.sources));
+    if (report.financials) lines.push(...formatSources(report.financials.sources));
     lines.push("");
   }
 
-  if (report.keyPeople) {
-    lines.push(`## Key People\n`);
-    report.keyPeople.people.forEach((p) => {
-      lines.push(`- **${p.name}** — ${p.title}: ${p.background}`);
-    });
-    lines.push(`\n> **Interview Tip:** ${report.keyPeople.interviewTip}`);
-    lines.push(...formatSources(report.keyPeople.sources));
-    lines.push("");
-  }
-
+  // 6. Product & Tech Stack
   if (report.techAndProduct) {
     const tp = report.techAndProduct;
     lines.push(`## Product & Tech Stack\n`);
@@ -90,37 +118,7 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
     lines.push("");
   }
 
-  if (report.cultureSentiment) {
-    const cs = report.cultureSentiment;
-    lines.push(`## Culture & Sentiment\n`);
-    lines.push(`*${cs.overallSentiment}*\n`);
-    if (cs.glassdoorRating) lines.push(`**Glassdoor Rating:** ${cs.glassdoorRating}`);
-    lines.push(`\n**Positives:**`);
-    cs.positives.forEach((p) => lines.push(`- ${p}`));
-    lines.push(`\n**Criticisms:**`);
-    cs.negatives.forEach((n) => lines.push(`- ${n}`));
-    lines.push(...formatSources(cs.sources));
-    lines.push("");
-  }
-
-  if (report.layoffs) {
-    const lo = report.layoffs;
-    lines.push(`## Layoffs & Restructuring\n`);
-    if (!lo.hasLayoffs) {
-      lines.push(`No significant layoffs or restructuring events found.\n`);
-    } else {
-      lo.events.forEach((event) => {
-        lines.push(`### ${event.description}${event.date ? ` (${event.date})` : ""}`);
-        if (event.affectedCount) lines.push(`**Affected:** ${event.affectedCount}`);
-        if (event.approach) lines.push(`**Approach:** ${event.approach}`);
-        if (event.sourceUrl) lines.push(`[Source](${event.sourceUrl})`);
-        lines.push("");
-      });
-      lines.push(`**Overall Approach:** ${lo.overallApproach}`);
-      lines.push(`**Public Sentiment:** ${lo.sentiment}\n`);
-    }
-  }
-
+  // 7. Interview Preparation
   if (report.interviewPrep) {
     const ip = report.interviewPrep;
     lines.push(`## Interview Preparation\n`);
