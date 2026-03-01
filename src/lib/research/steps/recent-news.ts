@@ -39,18 +39,12 @@ export async function researchRecentNews(jd: ParsedJD, rawJD: string): Promise<R
     .map((url, i) => `[${i}] ${url}`)
     .join("\n");
 
-  console.log("[recent-news] citationList sent to OpenAI:\n", citationList || "(empty)");
-  console.log("[recent-news] perplexity content length:", perplexityResult.content.length);
-
   const internal = await generateStructured({
     system: `You are a news analyst. Extract structured news items from the provided research. For each item, set citationIndex to the 0-based index of the citation URL that sourced it. If no citation matches, set citationIndex to null. NEVER fabricate news — only extract what is present in the research text. If the research contains no relevant news, return an empty items array.`,
     prompt: `Extract the top news items about "${jd.companyName}" relevant to a "${jd.roleTitle}" candidate.\n\nResearch:\n${perplexityResult.content}\n\nAvailable citations:\n${citationList}`,
     schema: InternalRecentNewsSchema,
     schemaName: "RecentNews",
   });
-
-  console.log("[recent-news] OpenAI extracted items:", internal.items.length);
-  console.log("[recent-news] items:", JSON.stringify(internal.items.map(i => ({ headline: i.headline, citationIndex: i.citationIndex })), null, 2));
 
   // Map citationIndex → real URLs from Perplexity's citations[]
   return {

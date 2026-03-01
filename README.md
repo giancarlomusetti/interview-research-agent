@@ -7,13 +7,14 @@ AI-powered interview preparation tool. Paste a job description and get a compreh
 ## What It Does
 
 1. **Parses the job description** — extracts company, role, skills, responsibilities, seniority
-2. **Researches the company** (6 parallel research streams):
+2. **Researches the company** (7 parallel research streams + Perplexity news):
    - Company overview
-   - Recent news
+   - Recent news (Perplexity sonar-pro with citations)
    - Funding & financials
    - Key people / leadership
    - Products & tech stack
    - Culture & employee sentiment
+   - Layoffs & restructuring signals
 3. **Generates interview prep** — questions they'll ask, questions to ask them, tailored talking points
 
 Everything is filtered through the lens of the specific role — not generic advice.
@@ -23,13 +24,13 @@ Everything is filtered through the lens of the specific role — not generic adv
 ```
 Client (React)  ─── SSE ───>  /api/research (Next.js Route Handler)
                                     │
-                        ┌───────────┤
-                        ▼           ▼
-                   Tavily API   OpenAI GPT-4o
-                   (web search) (structured output)
+                        ┌───────────┼───────────┐
+                        ▼           ▼           ▼
+                   Tavily API   OpenAI GPT-4o   Perplexity API
+                  (web search) (structured out) (news + citations)
 ```
 
-**Pipeline**: 8 steps with 3-wave parallelization (parse JD → 3 parallel → 3 parallel → interview prep synthesis)
+**Pipeline**: 9 steps with 3-wave parallelization (parse JD → 3 parallel → 4 parallel → interview prep synthesis)
 
 **Streaming**: Server-Sent Events emit progress updates and section data as each step completes, so the UI renders incrementally.
 
@@ -38,8 +39,9 @@ Client (React)  ─── SSE ───>  /api/research (Next.js Route Handler)
 - **Framework**: Next.js 16 (App Router) + TypeScript (strict)
 - **Styling**: Tailwind CSS + shadcn/ui, dark theme
 - **AI**: OpenAI GPT-4o via Vercel AI SDK (`generateObject` for structured output)
+- **News**: Perplexity sonar-pro (real-time news with citations)
 - **Search**: Tavily API (web search for company research)
-- **Rate Limiting**: In-memory, 10 requests/IP/day
+- **Rate Limiting**: In-memory, 10 requests/IP/day + 25 global/day
 
 ## Getting Started
 
@@ -48,6 +50,7 @@ Client (React)  ─── SSE ───>  /api/research (Next.js Route Handler)
 - Node.js 20+
 - OpenAI API key ([platform.openai.com](https://platform.openai.com))
 - Tavily API key ([tavily.com](https://tavily.com) — free tier: 1,000 searches/month)
+- Perplexity API key ([docs.perplexity.ai](https://docs.perplexity.ai))
 
 ### Setup
 
@@ -69,6 +72,7 @@ npm run dev
 |---|---|---|
 | `OPENAI_API_KEY` | Yes | OpenAI API key |
 | `TAVILY_API_KEY` | Yes | Tavily search API key |
+| `PERPLEXITY_API_KEY` | Yes | Perplexity API key (for news) |
 | `OPENAI_MODEL` | No | Override model (default: `gpt-4o`) |
 
 ## Deploy to Vercel
@@ -76,7 +80,7 @@ npm run dev
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
 1. Import the repo
-2. Add `OPENAI_API_KEY` and `TAVILY_API_KEY` as environment variables
+2. Add `OPENAI_API_KEY`, `TAVILY_API_KEY`, and `PERPLEXITY_API_KEY` as environment variables
 3. Deploy
 
 The rate limiter uses in-memory storage, so it resets on each deployment/cold start. For production, consider Upstash Redis.
@@ -98,6 +102,7 @@ src/
 └── lib/
     ├── ai/
     │   ├── provider.ts           # LLM abstraction (OpenAI)
+    │   ├── perplexity.ts         # Perplexity API client (news)
     │   └── prompts.ts            # All prompt templates
     ├── research/
     │   ├── pipeline.ts           # Orchestrator with parallelization
@@ -105,14 +110,21 @@ src/
     │   └── steps/                # Individual research steps
     ├── search/
     │   └── client.ts             # Tavily wrapper
-    └── rate-limit.ts             # In-memory IP rate limiter
+    └── rate-limit.ts             # In-memory rate limiter (per-IP + global)
 ```
 
 ## API Budget Per Research
 
-- ~10-12 Tavily searches
-- 8 OpenAI structured output calls
+- 1 Perplexity sonar-pro call (news with citations)
+- ~9 Tavily searches (across research streams)
+- 9 OpenAI structured output calls
 - Supports ~80-100 researches/month on Tavily free tier
+
+## Rate Limiting
+
+- **Per-IP**: 10 researches per 24 hours
+- **Global**: 25 researches per 24 hours (cost safety net)
+- Skipped in development mode
 
 ## Future Improvements
 

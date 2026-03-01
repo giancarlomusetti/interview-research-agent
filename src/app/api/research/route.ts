@@ -1,12 +1,31 @@
 import { NextRequest } from "next/server";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, checkGlobalRateLimit } from "@/lib/rate-limit";
 import { runResearchPipeline } from "@/lib/research/pipeline";
 import type { PipelineEvent } from "@/lib/research/types";
 
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
-  // Rate limiting
+  // Rate limiting — check global cap first (single lookup), then per-IP
+  const globalLimit = checkGlobalRateLimit();
+  if (!globalLimit.allowed) {
+    const retryAfterSec = Math.ceil((globalLimit.resetAt - Date.now()) / 1000);
+    return new Response(
+      JSON.stringify({
+        error: "Rate limit exceeded",
+        message: "Daily research limit reached. Try again tomorrow.",
+        resetAt: globalLimit.resetAt,
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(retryAfterSec),
+        },
+      }
+    );
+  }
+
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??

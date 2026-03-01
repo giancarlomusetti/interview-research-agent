@@ -38,17 +38,6 @@ export async function researchNews(
 
   const content = response.choices[0]?.message?.content;
 
-  console.log("[perplexity] === REQUEST ===");
-  console.log("[perplexity] companyName:", companyName);
-  console.log("[perplexity] roleTitle:", roleTitle);
-  console.log("[perplexity] jobDescription length:", jobDescription.length);
-  console.log("[perplexity] === RESPONSE ===");
-  console.log("[perplexity] content length:", typeof content === "string" ? content.length : 0);
-  console.log("[perplexity] content preview:", typeof content === "string" ? content.slice(0, 500) : "(non-string)");
-  console.log("[perplexity] citations:", JSON.stringify(response.citations));
-  console.log("[perplexity] search_results count:", response.search_results?.length ?? 0);
-  console.log("[perplexity] search_results:", JSON.stringify(response.search_results?.map(r => ({ title: r.title, url: r.url })) ?? []));
-
   return {
     content: typeof content === "string" ? content : "",
     citations: response.citations ?? [],
