@@ -83,10 +83,12 @@ interface SearchFormProps {
 export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
   const [input, setInput] = useState("");
 
+  const trimmed = input.trim();
+  const isUrl = /^https?:\/\//i.test(trimmed) || /^www\./i.test(trimmed);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isUrl) return;
     onSubmit(trimmed);
   }
 
@@ -105,9 +107,16 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
         </div>
       </div>
 
+      {isUrl && (
+        <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
+          It looks like you pasted a link. Please copy the job description text
+          from the page and paste it here instead.
+        </p>
+      )}
+
       <Button
         type="submit"
-        disabled={disabled || !input.trim()}
+        disabled={disabled || !trimmed || isUrl}
         className="w-full h-12 text-base font-semibold"
         size="lg"
       >
