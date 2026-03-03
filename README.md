@@ -4,133 +4,98 @@ AI-powered interview preparation tool. Paste a job description and get a compreh
 
 **[Try it live](https://interview-research-agent.vercel.app)** — no sign-up, no API keys needed. 10 free researches per day.
 
-## What It Does
+---
 
-1. **Parses the job description** — extracts company, role, skills, responsibilities, seniority
-2. **Researches the company** (7 parallel research streams + Perplexity news):
-   - Company overview
-   - Recent news (Perplexity sonar-pro with citations)
-   - Funding & financials
-   - Key people / leadership
-   - Products & tech stack
-   - Culture & employee sentiment
-   - Layoffs & restructuring signals
-3. **Generates interview prep** — questions they'll ask, questions to ask them, tailored talking points
+## Problem
 
-Everything is filtered through the lens of the specific role — not generic advice.
+Candidates preparing for interviews spend 2–4 hours manually googling the company, skimming Glassdoor, reading recent news, and piecing together talking points — only to end up with generic, surface-level prep that isn't tailored to the actual role.
 
-## Architecture
+There was no tool that automated deep company research *and* filtered it through the lens of a specific job description to produce role-aware interview prep.
 
-```
-Client (React)  ─── SSE ───>  /api/research (Next.js Route Handler)
-                                    │
-                        ┌───────────┼───────────┐
-                        ▼           ▼           ▼
-                   Tavily API   OpenAI GPT-4o   Perplexity API
-                  (web search) (structured out) (news + citations)
-```
+## Solution
 
-**Pipeline**: 9 steps with 3-wave parallelization (parse JD → 3 parallel → 4 parallel → interview prep synthesis)
+A Next.js app where you paste a job description and get a full research briefing in ~20 seconds.
 
-**Streaming**: Server-Sent Events emit progress updates and section data as each step completes, so the UI renders incrementally.
+The agent runs 9 steps across 3 parallel waves:
+
+| Step | What It Does | API Used |
+|---|---|---|
+| Parse JD | Extracts company, role, skills, seniority | OpenAI GPT-4o |
+| Company overview | Background, size, mission | Tavily + GPT-4o |
+| Recent news | Latest developments with citations | Perplexity sonar-pro |
+| Funding & financials | Runway, revenue signals, investors | Tavily + GPT-4o |
+| Key people | Leadership bios and recent activity | Tavily + GPT-4o |
+| Products & tech stack | What they build and how | Tavily + GPT-4o |
+| Culture & sentiment | Glassdoor signals, employee reviews | Tavily + GPT-4o |
+| Layoffs & signals | Restructuring, hiring freeze indicators | Tavily + GPT-4o |
+| Interview prep | Questions they'll ask, questions to ask, talking points | OpenAI GPT-4o |
+
+Results stream into the UI as each step completes via Server-Sent Events — no waiting for the full pipeline to finish.
+
+## Tradeoffs
+
+**In-memory rate limiting vs. Upstash Redis** — chose in-memory to keep the deploy zero-config. The tradeoff is limits reset on every cold start, so the 25/day global cap isn't fully durable. A Redis layer would fix this but adds infrastructure cost and complexity for a free tool.
+
+**SSE streaming vs. simple polling** — streaming gives a much better perceived performance UX (results appear progressively) but required a more complex hook on the client and careful error handling on the server. Worth it for a research tool where the wait would otherwise feel opaque.
+
+**OpenAI GPT-4o vs. cheaper models** — used GPT-4o for structured output quality. The `generateObject` + Zod schema approach needs a model that reliably follows complex JSON schemas. Cheaper models failed too often on multi-field nested outputs. Cost tradeoff is ~$0.05/research, acceptable at low volume.
+
+**Tavily free tier constraint** — 1,000 searches/month caps the live version at ~80–100 researches/month. Scaling would require either a paid Tavily plan or caching results for popular companies.
+
+## What I Learned
+
+- **Parallel AI pipelines with SSE**: Orchestrating 9 LLM calls across 3 dependency waves while streaming results to a client forced me to think carefully about promise batching, error isolation (one failed step shouldn't kill the stream), and how SSE handles backpressure in Next.js Route Handlers.
+
+- **Structured output with Zod**: Using `generateObject` with explicit Zod schemas instead of parsing free-text LLM output made the pipeline dramatically more reliable. Defining the schema first also clarified what each step actually needed to produce.
+
+- **Role-aware prompting**: The key insight was passing the parsed job description as context into every downstream research step, not just the final synthesis. This is what makes the output feel tailored rather than generic — the model knows what to look for in each section relative to the role.
+
+- **Perplexity for real-time data**: Learned the difference between retrieval-augmented generation (Tavily searches, then summarizes) vs. Perplexity's sonar model (searches + reasons natively). Perplexity is significantly better for news because it returns citations alongside synthesis, which matters for credibility in an interview prep context.
+
+## What Makes a Good Research Session
+
+1. **Paste the full job description** — the more context, the sharper the role-specific framing
+2. **Use the "questions to ask them" section** — shows you've done homework interviewers rarely expect
+3. **Read the tech stack section before a technical screen** — know what they're actually building
+4. **Review talking points against your resume** — the agent maps your background to their priorities
+5. **Re-run after major company news** — Perplexity pulls real-time results, so freshness matters
+
+---
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router) + TypeScript (strict)
+- **Framework**: Next.js (App Router) + TypeScript strict mode
 - **Styling**: Tailwind CSS + shadcn/ui, dark theme
 - **AI**: OpenAI GPT-4o via Vercel AI SDK (`generateObject` for structured output)
-- **News**: Perplexity sonar-pro (real-time news with citations)
-- **Search**: Tavily API (web search for company research)
-- **Rate Limiting**: In-memory, 10 requests/IP/day + 25 global/day
+- **News**: Perplexity sonar-pro (real-time with citations)
+- **Search**: Tavily API (free tier: 1,000 searches/month)
+- **Deployment**: Vercel
+- **Rate Limiting**: In-memory, 10/IP/day + 25 global/day
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- OpenAI API key ([platform.openai.com](https://platform.openai.com))
-- Tavily API key ([tavily.com](https://tavily.com) — free tier: 1,000 searches/month)
-- Perplexity API key ([docs.perplexity.ai](https://docs.perplexity.ai))
-
-### Setup
+## Quick Start
 
 ```bash
 git clone https://github.com/giancarlomusetti/interview-research-agent.git
 cd interview-research-agent
 npm install
-
-# Copy env template and add your keys
-cp .env.example .env.local
-# Edit .env.local with your API keys
-
+cp .env.example .env.local  # add your API keys
 npm run dev
 ```
 
-### Environment Variables
+**Required environment variables:**
 
-| Variable | Required | Description |
-|---|---|---|
-| `OPENAI_API_KEY` | Yes | OpenAI API key |
-| `TAVILY_API_KEY` | Yes | Tavily search API key |
-| `PERPLEXITY_API_KEY` | Yes | Perplexity API key (for news) |
-| `OPENAI_MODEL` | No | Override model (default: `gpt-4o`) |
+| Variable | Where to get it |
+|---|---|
+| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) |
+| `TAVILY_API_KEY` | [tavily.com](https://tavily.com) — free tier available |
+| `PERPLEXITY_API_KEY` | [docs.perplexity.ai](https://docs.perplexity.ai) |
 
-## Deploy to Vercel
+## Deploy Your Own
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 
-1. Import the repo
-2. Add `OPENAI_API_KEY`, `TAVILY_API_KEY`, and `PERPLEXITY_API_KEY` as environment variables
-3. Deploy
+Import the repo, add the three environment variables, deploy.
 
-The rate limiter uses in-memory storage, so it resets on each deployment/cold start. For production, consider Upstash Redis.
+## License
 
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── page.tsx                  # Main page (client component)
-│   └── api/research/route.ts     # SSE streaming endpoint
-├── components/
-│   ├── search-form.tsx           # JD input with example chips
-│   ├── research-progress.tsx     # Step-by-step progress tracker
-│   ├── report-view.tsx           # Report container
-│   └── report-sections/          # Individual report cards
-├── hooks/
-│   └── use-research.ts           # SSE consumer hook
-└── lib/
-    ├── ai/
-    │   ├── provider.ts           # LLM abstraction (OpenAI)
-    │   ├── perplexity.ts         # Perplexity API client (news)
-    │   └── prompts.ts            # All prompt templates
-    ├── research/
-    │   ├── pipeline.ts           # Orchestrator with parallelization
-    │   ├── types.ts              # Zod schemas + TypeScript types
-    │   └── steps/                # Individual research steps
-    ├── search/
-    │   └── client.ts             # Tavily wrapper
-    └── rate-limit.ts             # In-memory rate limiter (per-IP + global)
-```
-
-## API Budget Per Research
-
-- 1 Perplexity sonar-pro call (news with citations)
-- ~9 Tavily searches (across research streams)
-- 9 OpenAI structured output calls
-- Supports ~80-100 researches/month on Tavily free tier
-
-## Rate Limiting
-
-- **Per-IP**: 10 researches per 24 hours
-- **Global**: 25 researches per 24 hours (cost safety net)
-- Skipped in development mode
-
-## Future Improvements
-
-- Resume input for gap analysis + strength mapping
-- Save/share reports (Supabase + shareable URLs)
-- PDF export
-- Upstash Redis for durable rate limiting
-- Cache popular companies
-- Additional data sources (Crunchbase API, LinkedIn, etc.)
+MIT — fork it, build on it, ship your own version.
