@@ -14,7 +14,7 @@ There was no tool that automated deep company research *and* filtered it through
 
 ## Solution
 
-A Next.js app where you paste a job description and get a full research briefing in ~20 seconds.
+A Next.js app where you paste a job description — and optionally your resume — and get a full research briefing in ~20 seconds.
 
 The agent runs 9 steps across 3 parallel waves:
 
@@ -31,6 +31,8 @@ The agent runs 9 steps across 3 parallel waves:
 | Interview prep | Questions they'll ask, questions to ask, talking points | OpenAI GPT-4o |
 
 Results stream into the UI as each step completes via Server-Sent Events — no waiting for the full pipeline to finish.
+
+Adding your resume personalizes the interview prep section: suggested approaches reference your specific experience, talking points bridge your background to the role's requirements, and questions to ask factor in what you already know.
 
 ## Tradeoffs
 
@@ -55,10 +57,11 @@ Results stream into the UI as each step completes via Server-Sent Events — no 
 ## What Makes a Good Research Session
 
 1. **Paste the full job description** — the more context, the sharper the role-specific framing
-2. **Use the "questions to ask them" section** — shows you've done homework interviewers rarely expect
-3. **Read the tech stack section before a technical screen** — know what they're actually building
-4. **Review talking points against your resume** — the agent maps your background to their priorities
-5. **Re-run after major company news** — Perplexity pulls real-time results, so freshness matters
+2. **Add your resume for personalized prep** — suggested approaches and talking points will reference your specific experience, not generic advice
+3. **Use the "questions to ask them" section** — shows you've done homework interviewers rarely expect
+4. **Read the tech stack section before a technical screen** — know what they're actually building
+5. **Review talking points against your resume** — the agent maps your background to their priorities
+6. **Re-run after major company news** — Perplexity pulls real-time results, so freshness matters
 
 ---
 
