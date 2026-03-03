@@ -146,7 +146,12 @@ function reportToMarkdown(report: Partial<ResearchReport>): string {
 export default function Home() {
   const { state, steps, report, error, startResearch, reset } = useResearch();
   const [copied, setCopied] = useState(false);
+  const [resume, setResume] = useState("");
   const isLoading = state === "loading";
+
+  function handleSubmit(jd: string) {
+    startResearch(jd, resume.trim() || undefined);
+  }
 
   async function handleCopyMarkdown() {
     const md = reportToMarkdown(report);
@@ -171,7 +176,7 @@ export default function Home() {
       {/* Search Form */}
       {state === "idle" || state === "error" ? (
         <div className="mb-8">
-          <SearchForm onSubmit={startResearch} disabled={false} />
+          <SearchForm onSubmit={handleSubmit} disabled={false} resume={resume} onResumeChange={setResume} />
           {error && (
             <div className="mt-4 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
               {error}
@@ -183,7 +188,7 @@ export default function Home() {
       {/* Loading state: form disabled + progress */}
       {isLoading && (
         <div className="space-y-6 mb-8">
-          <SearchForm onSubmit={() => {}} disabled={true} />
+          <SearchForm onSubmit={() => {}} disabled={true} resume={resume} onResumeChange={setResume} />
           <ResearchProgress steps={steps} />
         </div>
       )}

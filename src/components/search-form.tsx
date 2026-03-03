@@ -78,10 +78,13 @@ Compensation: $190K - $260K + equity + benefits`,
 interface SearchFormProps {
   onSubmit: (jobDescription: string) => void;
   disabled?: boolean;
+  resume?: string;
+  onResumeChange?: (value: string) => void;
 }
 
-export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
+export function SearchForm({ onSubmit, disabled, resume, onResumeChange }: SearchFormProps) {
   const [input, setInput] = useState("");
+  const [isResumeOpen, setIsResumeOpen] = useState(false);
 
   const trimmed = input.trim();
   const isUrl = /^https?:\/\//i.test(trimmed) || /^www\./i.test(trimmed);
@@ -112,6 +115,65 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
           It looks like you pasted a link. Please copy the job description text
           from the page and paste it here instead.
         </p>
+      )}
+
+      {/* Collapsible Resume Section */}
+      {onResumeChange && (
+        <div className="border border-border rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsResumeOpen(!isResumeOpen)}
+            disabled={disabled}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                className={`h-4 w-4 transition-transform ${isResumeOpen ? "rotate-90" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+              Add your resume (optional)
+            </span>
+            {!isResumeOpen && resume && resume.trim() && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                Resume added
+              </span>
+            )}
+          </button>
+          {isResumeOpen && (
+            <div className="px-4 pb-4 space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Paste your resume text to get personalized interview talking points and suggested approaches based on your experience.
+              </p>
+              <Textarea
+                value={resume ?? ""}
+                onChange={(e) => onResumeChange(e.target.value)}
+                placeholder="Paste your resume text here..."
+                disabled={disabled}
+                className="min-h-[150px] resize-y bg-card text-card-foreground border-border placeholder:text-muted-foreground text-sm leading-relaxed"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {(resume ?? "").length.toLocaleString()} / 10,000
+                </span>
+                {resume && resume.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => onResumeChange("")}
+                    disabled={disabled}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       <Button

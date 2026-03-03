@@ -23,10 +23,12 @@ const STEPS: StepInfo[] = [
 
 export async function runResearchPipeline(
   jobDescription: string,
-  emit: (event: PipelineEvent) => void
+  emit: (event: PipelineEvent) => void,
+  resume?: string
 ): Promise<void> {
   const steps = STEPS.map((s) => ({ ...s }));
   const report: ResearchReport = {} as ResearchReport;
+  if (resume) report.resume = resume;
 
   function updateStep(id: string, status: StepInfo["status"]) {
     const step = steps.find((s) => s.id === id);

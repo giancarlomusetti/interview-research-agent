@@ -1,5 +1,5 @@
 import { generateStructured } from "@/lib/ai/provider";
-import { SYSTEM_PROMPTS, buildInterviewPrepPrompt } from "@/lib/ai/prompts";
+import { buildInterviewPrepPrompt, buildInterviewPrepSystemPrompt } from "@/lib/ai/prompts";
 import {
   InterviewPrepSchema,
   type InterviewPrep,
@@ -9,8 +9,9 @@ import {
 export async function generateInterviewPrep(
   report: ResearchReport
 ): Promise<InterviewPrep> {
+  const resume = report.resume;
   return generateStructured({
-    system: SYSTEM_PROMPTS.interviewPrep,
+    system: buildInterviewPrepSystemPrompt(!!resume),
     prompt: buildInterviewPrepPrompt(
       JSON.stringify(report.parsedJD, null, 2),
       JSON.stringify(report.companyOverview ?? {}, null, 2),
@@ -19,7 +20,8 @@ export async function generateInterviewPrep(
       JSON.stringify(report.keyPeople ?? {}, null, 2),
       JSON.stringify(report.techAndProduct ?? {}, null, 2),
       JSON.stringify(report.cultureSentiment ?? {}, null, 2),
-      JSON.stringify(report.layoffs ?? {}, null, 2)
+      JSON.stringify(report.layoffs ?? {}, null, 2),
+      resume
     ),
     schema: InterviewPrepSchema,
     schemaName: "InterviewPrep",

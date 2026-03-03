@@ -160,6 +160,7 @@ export interface ResearchReport {
   cultureSentiment?: CultureSentiment;
   layoffs?: Layoffs;
   interviewPrep?: InterviewPrep;
+  resume?: string;
 }
 
 // Pipeline event types for SSE streaming

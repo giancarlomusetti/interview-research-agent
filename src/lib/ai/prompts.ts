@@ -29,6 +29,17 @@ IMPORTANT new fields:
   interviewPrep: `You are a senior career coach and interview strategist. Using the complete research dossier about the company and the parsed job description, create a tailored interview preparation guide. Every question, talking point, and suggestion must be specific to this role at this company — no generic advice. Demonstrate deep understanding of what the company is looking for based on the JD requirements and company context.`,
 };
 
+export function buildInterviewPrepSystemPrompt(hasResume: boolean): string {
+  if (!hasResume) return SYSTEM_PROMPTS.interviewPrep;
+  return `${SYSTEM_PROMPTS.interviewPrep}
+
+The candidate has provided their resume. You MUST personalize the interview prep using their actual experience:
+- In "suggestedApproach" for each question, reference specific projects, roles, or achievements from the resume that the candidate should highlight.
+- In "keyTalkingPoints", bridge the candidate's concrete experience to the role's requirements — don't just restate the JD.
+- In "questionsYouShouldAsk", factor in what the candidate already knows (from their background) vs. what they'd genuinely need to learn about the role/company.
+- Be specific: name technologies, companies, metrics, and accomplishments from the resume rather than giving generic advice.`;
+}
+
 export function buildParseJDPrompt(jobDescription: string): string {
   return `Analyze this job description and extract all structured information:\n\n---\n${jobDescription}\n---`;
 }
@@ -97,8 +108,13 @@ export function buildInterviewPrepPrompt(
   keyPeople: string,
   techAndProduct: string,
   culture: string,
-  layoffs: string
+  layoffs: string,
+  resume?: string
 ): string {
+  const resumeSection = resume
+    ? `\n\n## Candidate Resume\n${resume}\n\nUse the candidate's specific experience, projects, and achievements from the resume above to personalize all suggested approaches, talking points, and questions.`
+    : "";
+
   return `Create a comprehensive, tailored interview preparation guide based on all the research below.
 
 ## Parsed Job Description
@@ -123,7 +139,7 @@ ${techAndProduct}
 ${culture}
 
 ## Layoffs & Restructuring
-${layoffs}
+${layoffs}${resumeSection}
 
 Generate questions they'll likely ask (8), questions the candidate should ask (5), and key talking points (5-6, keep each succinct) that directly connect the candidate's preparation to this specific role and company. Every suggestion must reference specific details from the research.`;
 }

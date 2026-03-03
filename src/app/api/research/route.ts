@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
 
   // Parse input
   let jobDescription: string;
+  let resume: string | undefined;
   try {
     const body = await request.json();
     jobDescription = body.jobDescription;
@@ -66,6 +67,22 @@ export async function POST(request: NextRequest) {
         JSON.stringify({ error: "Job description is too long (max 15,000 characters)" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
+    }
+    if (body.resume) {
+      if (typeof body.resume !== "string") {
+        return new Response(
+          JSON.stringify({ error: "Resume must be a string" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (body.resume.length > 10000) {
+        return new Response(
+          JSON.stringify({ error: "Resume is too long (max 10,000 characters)" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      const trimmed = body.resume.trim();
+      resume = trimmed || undefined;
     }
   } catch {
     return new Response(
@@ -95,7 +112,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Run pipeline in background — don't await, let the stream flow
-  runResearchPipeline(jobDescription, emit)
+  runResearchPipeline(jobDescription, emit, resume)
     .then(() => {
       closeWriter();
     })

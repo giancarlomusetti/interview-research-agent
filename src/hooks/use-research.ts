@@ -10,7 +10,7 @@ interface UseResearchReturn {
   steps: StepInfo[];
   report: Partial<ResearchReport>;
   error: string | null;
-  startResearch: (jobDescription: string) => void;
+  startResearch: (jobDescription: string, resume?: string) => void;
   reset: () => void;
 }
 
@@ -29,7 +29,7 @@ export function useResearch(): UseResearchReturn {
     setError(null);
   }, []);
 
-  const startResearch = useCallback((jobDescription: string) => {
+  const startResearch = useCallback((jobDescription: string, resume?: string) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -44,7 +44,7 @@ export function useResearch(): UseResearchReturn {
         const response = await fetch("/api/research", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jobDescription }),
+          body: JSON.stringify({ jobDescription, ...(resume ? { resume } : {}) }),
           signal: controller.signal,
         });
 
