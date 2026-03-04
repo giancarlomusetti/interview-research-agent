@@ -147,7 +147,7 @@ export function SearchForm({ onSubmit, disabled, resume, onResumeChange }: Searc
           {isResumeOpen && (
             <div className="px-4 pb-4 space-y-2">
               <p className="text-xs text-muted-foreground">
-                Paste your resume text to get personalized interview talking points and suggested approaches based on your experience.
+                Paste your resume text to get personalized interview talking points and suggested approaches based on your experience. Your resume is sent to OpenAI for analysis and is not stored.
               </p>
               <Textarea
                 value={resume ?? ""}

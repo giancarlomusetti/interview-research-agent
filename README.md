@@ -16,15 +16,14 @@ There was no tool that automated deep company research *and* filtered it through
 
 A Next.js app where you paste a job description — and optionally your resume — and get a full research briefing in ~20 seconds.
 
-The agent runs 9 steps across 3 parallel waves:
+The agent runs 8 steps across 3 parallel waves:
 
 | Step | What It Does | API Used |
 |---|---|---|
 | Parse JD | Extracts company, role, skills, seniority | OpenAI GPT-4o |
 | Company overview | Background, size, mission | Tavily + GPT-4o |
 | Recent news | Latest developments with verified source links | Perplexity sonar-pro |
-| Funding & financials | Runway, revenue signals, investors | Tavily + GPT-4o |
-| Key people | Leadership bios and recent activity | Tavily + GPT-4o |
+| Funding & financials | Runway, revenue signals, investors | Perplexity sonar-pro + GPT-4o |
 | Products & tech stack | What they build and how | Tavily + GPT-4o |
 | Culture & sentiment | Glassdoor signals, employee reviews | Tavily + GPT-4o |
 | Layoffs & signals | Restructuring, hiring freeze indicators | Tavily + GPT-4o |
@@ -46,7 +45,7 @@ Adding your resume personalizes the interview prep section: suggested approaches
 
 ## What I Learned
 
-- **Parallel AI pipelines with SSE**: Orchestrating 9 LLM calls across 3 dependency waves while streaming results to a client forced me to think carefully about promise batching, error isolation (one failed step shouldn't kill the stream), and how SSE handles backpressure in Next.js Route Handlers.
+- **Parallel AI pipelines with SSE**: Orchestrating 8 LLM calls across 3 dependency waves while streaming results to a client forced me to think carefully about promise batching, error isolation (one failed step shouldn't kill the stream), and how SSE handles backpressure in Next.js Route Handlers.
 
 - **Structured output with Zod**: Using `generateObject` with explicit Zod schemas instead of parsing free-text LLM output made the pipeline dramatically more reliable. Defining the schema first also clarified what each step actually needed to produce.
 

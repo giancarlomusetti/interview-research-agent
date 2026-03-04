@@ -3,7 +3,6 @@ import { parseJobDescription } from "./steps/parse-jd";
 import { researchCompanyOverview } from "./steps/company-overview";
 import { researchRecentNews } from "./steps/recent-news";
 import { researchFinancials } from "./steps/financials";
-import { researchKeyPeople } from "./steps/key-people";
 import { researchTechAndProduct } from "./steps/tech-and-product";
 import { researchCulture } from "./steps/culture";
 import { researchLayoffs } from "./steps/layoffs";
@@ -14,7 +13,6 @@ const STEPS: StepInfo[] = [
   { id: "company-overview", label: "Company Overview", status: "pending" },
   { id: "recent-news", label: "News", status: "pending" },
   { id: "financials", label: "Funding & Financials", status: "pending" },
-  { id: "key-people", label: "Key People", status: "pending" },
   { id: "tech-product", label: "Product & Tech Stack", status: "pending" },
   { id: "culture", label: "Culture & Sentiment", status: "pending" },
   { id: "layoffs", label: "Layoffs & Restructuring", status: "pending" },
@@ -83,25 +81,15 @@ export async function runResearchPipeline(
       console.error("Financials failed:", financials.reason);
     }
 
-    // Wave 2: Key People, Tech & Product, Culture, Layoffs (parallel)
-    const wave2StepIds = ["key-people", "tech-product", "culture", "layoffs"];
+    // Wave 2: Tech & Product, Culture, Layoffs (parallel)
+    const wave2StepIds = ["tech-product", "culture", "layoffs"];
     wave2StepIds.forEach((id) => updateStep(id, "running"));
 
-    const [keyPeople, techAndProduct, culture, layoffs] = await Promise.allSettled([
-      researchKeyPeople(report.parsedJD),
+    const [techAndProduct, culture, layoffs] = await Promise.allSettled([
       researchTechAndProduct(report.parsedJD),
       researchCulture(report.parsedJD),
       researchLayoffs(report.parsedJD),
     ]);
-
-    if (keyPeople.status === "fulfilled") {
-      report.keyPeople = keyPeople.value;
-      updateStep("key-people", "completed");
-      emit({ type: "section", sectionId: "keyPeople", data: report.keyPeople });
-    } else {
-      updateStep("key-people", "error");
-      console.error("Key people failed:", keyPeople.reason);
-    }
 
     if (techAndProduct.status === "fulfilled") {
       report.techAndProduct = techAndProduct.value;

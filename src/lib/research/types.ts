@@ -64,21 +64,7 @@ export const FinancialsSchema = z.object({
 });
 export type Financials = z.infer<typeof FinancialsSchema>;
 
-// Step 4: Key People
-export const PersonSchema = z.object({
-  name: z.string(),
-  title: z.string(),
-  background: z.string().describe("1-2 sentences about their background"),
-  notableInfo: z.string().nullable().describe("Interesting fact relevant to a candidate"),
-});
-export const KeyPeopleSchema = z.object({
-  people: z.array(PersonSchema).describe("Up to 6 key people"),
-  interviewTip: z.string().describe("How to leverage this info in your interview"),
-  sources: z.array(SourceLinkSchema).nullable().describe("Source URLs used for this section"),
-});
-export type KeyPeople = z.infer<typeof KeyPeopleSchema>;
-
-// Step 5: Product & Tech
+// Step 4: Product & Tech
 export const TechAndProductSchema = z.object({
   products: z.array(z.object({
     name: z.string(),
@@ -155,7 +141,6 @@ export interface ResearchReport {
   companyOverview?: CompanyOverview;
   recentNews?: RecentNews;
   financials?: Financials;
-  keyPeople?: KeyPeople;
   techAndProduct?: TechAndProduct;
   cultureSentiment?: CultureSentiment;
   layoffs?: Layoffs;

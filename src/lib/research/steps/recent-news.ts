@@ -40,20 +40,39 @@ export async function researchRecentNews(jd: ParsedJD, rawJD: string): Promise<R
     rawJD
   );
 
-  // Build rich source blocks from searchResults so Claude can match by content, not index
-  const sourceBlocks = perplexityResult.searchResults
+  // Filter out generic aggregator domains — preserve their context in the prose but
+  // don't offer them as linkable sources (their URLs lead to generic company pages, not articles)
+  const GENERIC_DOMAINS = [
+    "zoominfo.com",
+    "dnb.com",
+    "hoovers.com",
+    "manta.com",
+    "similarweb.com",
+    "craft.co",
+  ];
+  const linkableResults = perplexityResult.searchResults.filter((r) => {
+    try {
+      const hostname = new URL(r.url).hostname.replace("www.", "");
+      return !GENERIC_DOMAINS.some((d) => hostname === d || hostname.endsWith("." + d));
+    } catch {
+      return false;
+    }
+  });
+
+  // Build rich source blocks from linkable searchResults so Claude can match by content, not index
+  const sourceBlocks = linkableResults
     .map(
       (r, i) =>
         `[SOURCE ${i + 1}]\nTitle: ${r.title}\nURL: ${r.url}${r.date ? `\nDate: ${r.date}` : ""}${r.snippet ? `\nSnippet: ${r.snippet}` : ""}`
     )
     .join("\n\n");
 
-  // Fall back to flat citation list if searchResults is empty
+  // Fall back to flat citation list if no linkable searchResults are available
   const sourcesSection = sourceBlocks.trim()
     ? `Source references (copy URL verbatim into sourceUrl):\n\n${sourceBlocks}`
     : `Available citation URLs:\n${perplexityResult.citations.map((u) => `- ${u}`).join("\n")}`;
 
-  const hasSources = perplexityResult.searchResults.length > 0 || perplexityResult.citations.length > 0;
+  const hasSources = linkableResults.length > 0 || perplexityResult.citations.length > 0;
 
   const system = hasSources
     ? `You are a news analyst. Extract structured news items from the provided research. For each item, set sourceUrl to the exact URL from the source references that best supports the headline — copy it verbatim, do NOT modify or construct URLs. Set _urlVerified to true only if the source title or snippet directly relates to the headline. NEVER fabricate news — only extract what is present in the research text. If the research contains no relevant news, return an empty items array.`

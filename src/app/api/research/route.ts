@@ -118,8 +118,7 @@ export async function POST(request: NextRequest) {
     })
     .catch((error) => {
       console.error("[research] Pipeline error:", error);
-      const message = error instanceof Error ? error.message : "Pipeline failed";
-      emit({ type: "error", message });
+      emit({ type: "error", message: "Research failed. Please try again." });
       closeWriter();
     });
 

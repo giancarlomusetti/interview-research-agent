@@ -1,9 +1,10 @@
 import { tavily, type TavilyClient } from "@tavily/core";
+import { requireEnv } from "@/lib/env";
 
 let _client: TavilyClient | null = null;
 function getClient() {
   if (!_client) {
-    _client = tavily({ apiKey: process.env.TAVILY_API_KEY! });
+    _client = tavily({ apiKey: requireEnv("TAVILY_API_KEY") });
   }
   return _client;
 }

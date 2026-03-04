@@ -7,9 +7,15 @@ export const SYSTEM_PROMPTS = {
 
 IMPORTANT — noBSSummary field: Write a sharp, specific 2-3 sentence summary of what the company actually does, what problem they solve, and why it matters. Include concrete traction numbers (payments processed, users, ARR) and market context. No corporate fluff. Example: "SQUIRE solves barbershop chaos: walk-in vs appointment conflicts, chair rental disputes, per-barber payouts, client retention. $2B+ payments processed = proven PMF in $5B fragmented industry." Another example: "Stripe builds payment infrastructure that developers actually want to use. Powers 3.1M+ businesses globally, processing hundreds of billions annually. Dominant in developer-first fintech with 95%+ gross retention."`,
 
-  financials: `You are a financial analyst providing briefings for job candidates. Synthesize funding, valuation, and financial information into a clear picture of the company's financial health and trajectory. Be honest about uncertainties — say "not publicly available" rather than guessing numbers. Include a "sources" array with {title, url} for each search result you used.`,
+  financials: `You are a financial analyst providing briefings for job candidates. Synthesize funding, valuation, and financial information into a clear picture of the company's financial health and trajectory.
 
-  keyPeople: `You are a leadership research analyst. Identify key people at the company who would be most relevant for an interview candidate to know about. Include the CEO/founders, and anyone likely involved in the hiring process for the given department/role. Provide background that could help build rapport. Include a "sources" array with {title, url} for each search result you used.`,
+Rules:
+- Only report figures that appear explicitly in the research. Use null rather than "not publicly available" strings.
+- If values conflict across sources, use the most recent figure and note the discrepancy briefly.
+- Never construct a totalFundingRaised by summing round amounts — only use it if a source states a cumulative total.
+- For lastFundingRound, include round type + amount + date only if all three are confirmed; omit any you cannot confirm.
+- For sources, include URLs from the source references that contain the specific figures you cited.
+Include a "sources" array with {title, url} for each search result you used.`,
 
   techAndProduct: `You are a technology and product analyst. Synthesize information about the company's products, technology stack, and engineering culture. Connect everything back to the specific role being applied for. Highlight areas where the candidate could demonstrate relevant expertise. Include a "sources" array with {title, url} for each search result you used.`,
 
@@ -61,16 +67,6 @@ export function buildFinancialsPrompt(
   return `Analyze the financial situation of "${companyName}" based on these search results.\n\nCompany context from job description: ${companySummary}${COMPANY_FILTER_INSTRUCTION}\n\n${searchResults}`;
 }
 
-export function buildKeyPeoplePrompt(
-  companyName: string,
-  roleTitle: string,
-  department: string | null,
-  companySummary: string,
-  searchResults: string
-): string {
-  return `Identify key people at "${companyName}" relevant to someone interviewing for "${roleTitle}"${department ? ` in the ${department} department` : ""}.\n\nCompany context from job description: ${companySummary}${COMPANY_FILTER_INSTRUCTION}\n\nSearch results:\n${searchResults}`;
-}
-
 export function buildTechAndProductPrompt(
   companyName: string,
   roleTitle: string,
@@ -105,7 +101,6 @@ export function buildInterviewPrepPrompt(
   companyOverview: string,
   recentNews: string,
   financials: string,
-  keyPeople: string,
   techAndProduct: string,
   culture: string,
   layoffs: string,
@@ -128,9 +123,6 @@ ${recentNews}
 
 ## Financials
 ${financials}
-
-## Key People
-${keyPeople}
 
 ## Technology & Products
 ${techAndProduct}

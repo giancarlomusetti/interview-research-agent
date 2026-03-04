@@ -19,7 +19,6 @@ export function ReportView({ report }: ReportViewProps) {
     report.companyOverview ||
     report.recentNews ||
     report.financials ||
-    report.keyPeople ||
     report.techAndProduct ||
     report.cultureSentiment ||
     report.layoffs ||
