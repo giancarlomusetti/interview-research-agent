@@ -22,7 +22,7 @@ The agent runs 9 steps across 3 parallel waves:
 |---|---|---|
 | Parse JD | Extracts company, role, skills, seniority | OpenAI GPT-4o |
 | Company overview | Background, size, mission | Tavily + GPT-4o |
-| Recent news | Latest developments with citations | Perplexity sonar-pro |
+| Recent news | Latest developments with verified source links | Perplexity sonar-pro |
 | Funding & financials | Runway, revenue signals, investors | Tavily + GPT-4o |
 | Key people | Leadership bios and recent activity | Tavily + GPT-4o |
 | Products & tech stack | What they build and how | Tavily + GPT-4o |
@@ -52,7 +52,7 @@ Adding your resume personalizes the interview prep section: suggested approaches
 
 - **Role-aware prompting**: The key insight was passing the parsed job description as context into every downstream research step, not just the final synthesis. This is what makes the output feel tailored rather than generic — the model knows what to look for in each section relative to the role.
 
-- **Perplexity for real-time data**: Learned the difference between retrieval-augmented generation (Tavily searches, then summarizes) vs. Perplexity's sonar model (searches + reasons natively). Perplexity is significantly better for news because it returns citations alongside synthesis, which matters for credibility in an interview prep context.
+- **Perplexity for real-time data**: Learned the difference between retrieval-augmented generation (Tavily searches, then summarizes) vs. Perplexity's sonar model (searches + reasons natively). Perplexity is significantly better for news because it returns structured search results (title, URL, date, snippet) alongside synthesis. Rather than passing a flat list of citation URLs and asking the model to guess which index sourced which headline — which leads to mismatched links — the pipeline passes rich source blocks so the model selects URLs by matching content, not position. Results without a confident source match surface without a link rather than with a wrong one.
 
 ## What Makes a Good Research Session
 
