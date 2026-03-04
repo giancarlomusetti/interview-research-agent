@@ -3,18 +3,24 @@ import { generateStructured } from "@/lib/ai/provider";
 import { researchNews } from "@/lib/ai/perplexity";
 import type { RecentNews, ParsedJD } from "../types";
 
-// Internal schema: LLM maps each item to a citationIndex from Perplexity's citations[].
-// We resolve the index to a real URL programmatically.
+// Internal schema: LLM picks sourceUrl verbatim from the source blocks we provide.
+// _urlVerified is a self-check — if Claude marks false, we drop the URL rather than
+// surface a confidently wrong link.
 const InternalNewsItemSchema = z.object({
   headline: z.string(),
   date: z.string().nullable(),
   summary: z.string().describe("2-3 sentence summary"),
   relevanceToRole: z.string().describe("Why this matters for your interview"),
-  citationIndex: z
-    .number()
+  sourceUrl: z
+    .string()
     .nullable()
     .describe(
-      "The 0-based index into the citations list for this news item's source"
+      "Copy the URL verbatim from the source references below that best supports this headline. Null if no source clearly matches."
+    ),
+  _urlVerified: z
+    .boolean()
+    .describe(
+      "True only if the source title or snippet directly relates to this headline"
     ),
 });
 
@@ -34,19 +40,36 @@ export async function researchRecentNews(jd: ParsedJD, rawJD: string): Promise<R
     rawJD
   );
 
-  // Build a citation reference for the LLM to map items → URLs
-  const citationList = perplexityResult.citations
-    .map((url, i) => `[${i}] ${url}`)
-    .join("\n");
+  // Build rich source blocks from searchResults so Claude can match by content, not index
+  const sourceBlocks = perplexityResult.searchResults
+    .map(
+      (r, i) =>
+        `[SOURCE ${i + 1}]\nTitle: ${r.title}\nURL: ${r.url}${r.date ? `\nDate: ${r.date}` : ""}${r.snippet ? `\nSnippet: ${r.snippet}` : ""}`
+    )
+    .join("\n\n");
+
+  // Fall back to flat citation list if searchResults is empty
+  const sourcesSection = sourceBlocks.trim()
+    ? `Source references (copy URL verbatim into sourceUrl):\n\n${sourceBlocks}`
+    : `Available citation URLs:\n${perplexityResult.citations.map((u) => `- ${u}`).join("\n")}`;
+
+  const hasSources = perplexityResult.searchResults.length > 0 || perplexityResult.citations.length > 0;
+
+  const system = hasSources
+    ? `You are a news analyst. Extract structured news items from the provided research. For each item, set sourceUrl to the exact URL from the source references that best supports the headline — copy it verbatim, do NOT modify or construct URLs. Set _urlVerified to true only if the source title or snippet directly relates to the headline. NEVER fabricate news — only extract what is present in the research text. If the research contains no relevant news, return an empty items array.`
+    : `You are a news analyst. Extract structured news items from the provided research. Set sourceUrl to null for ALL items — no source references are available, do NOT invent or guess URLs. Set _urlVerified to false for ALL items. NEVER fabricate news — only extract what is present in the research text. If the research contains no relevant news, return an empty items array.`;
+
+  const prompt = hasSources
+    ? `Extract the top news items about "${jd.companyName}" relevant to a "${jd.roleTitle}" candidate.\n\nResearch:\n${perplexityResult.content}\n\n${sourcesSection}`
+    : `Extract the top news items about "${jd.companyName}" relevant to a "${jd.roleTitle}" candidate.\n\nResearch:\n${perplexityResult.content}`;
 
   const internal = await generateStructured({
-    system: `You are a news analyst. Extract structured news items from the provided research. For each item, set citationIndex to the 0-based index of the citation URL that sourced it. If no citation matches, set citationIndex to null. NEVER fabricate news — only extract what is present in the research text. If the research contains no relevant news, return an empty items array.`,
-    prompt: `Extract the top news items about "${jd.companyName}" relevant to a "${jd.roleTitle}" candidate.\n\nResearch:\n${perplexityResult.content}\n\nAvailable citations:\n${citationList}`,
+    system,
+    prompt,
     schema: InternalRecentNewsSchema,
     schemaName: "RecentNews",
   });
 
-  // Map citationIndex → real URLs from Perplexity's citations[]
   return {
     overallNarrative: internal.overallNarrative,
     items: internal.items.map((item) => ({
@@ -54,11 +77,8 @@ export async function researchRecentNews(jd: ParsedJD, rawJD: string): Promise<R
       date: item.date,
       summary: item.summary,
       relevanceToRole: item.relevanceToRole,
-      sourceUrl:
-        item.citationIndex != null &&
-        perplexityResult.citations[item.citationIndex]
-          ? perplexityResult.citations[item.citationIndex]
-          : null,
+      // Drop URL if no sources were available or Claude flagged it as unverified
+      sourceUrl: hasSources && item._urlVerified ? (item.sourceUrl ?? null) : null,
     })),
   };
 }
