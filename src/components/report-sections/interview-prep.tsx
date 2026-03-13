@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { InterviewPrep as InterviewPrepType } from "@/lib/research/types";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  technical: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  behavioral: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  "company-specific": "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  "role-specific": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  technical: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+  behavioral: "bg-purple-500/10 text-purple-700 border-purple-500/20",
+  "company-specific": "bg-amber-500/10 text-amber-700 border-amber-500/20",
+  "role-specific": "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
 };
 
 export function InterviewPrepSection({ data }: { data: InterviewPrepType }) {

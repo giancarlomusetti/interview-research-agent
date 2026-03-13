@@ -111,7 +111,7 @@ export function SearchForm({ onSubmit, disabled, resume, onResumeChange }: Searc
       </div>
 
       {isUrl && (
-        <p className="text-sm text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
+        <p className="text-sm text-amber-700 bg-amber-400/10 border border-amber-400/20 rounded-md px-3 py-2">
           It looks like you pasted a link. Please copy the job description text
           from the page and paste it here instead.
         </p>
